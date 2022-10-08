@@ -193,5 +193,5 @@ class TanhOp(Op):
     @staticmethod
     def act(node: Value) -> Value:
         n = node.data
-        t = (math.exp(2 * n) - 1) / (math.exp(2 * n) + 1)
+        t = (math.exp(max(min(2 * n, 709), -708)) - 1) / (math.exp(max(min(2 * n, 709), -708)) + 1)
         return Value(t, _parents=(node,), _grad_fn=TanhOp.backward)
