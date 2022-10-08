@@ -10,4 +10,4 @@
 Karpathy's autograd replica.
 """
 
-from .engine import Value, grad
+from .engine import Value
