@@ -178,7 +178,7 @@ class ReLUOp(Op):
         # TODO: Just assign node.data? Because how could the output node of ReLU be > 0??
         assert node.data >= 0, "ReLU's output node has negative value"
         # parent._grad += min(0, node.data)
-        parents[0]._grad += node.data
+        parents[0]._grad += 1 if node.data > 0 else 0
 
     @staticmethod
     def act(node: Value) -> Value:
