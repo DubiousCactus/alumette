@@ -10,11 +10,11 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='autograd',
-    packages=find_packages(include=['autograd', 'autograd.nn']),
+    name='alumette',
+    packages=find_packages(include=['alumette', 'alumette.nn']),
     version='0.1.0',
-    description='Mini neural net lib',
-    author='Theo Morales',
+    description='Mini torch-like reverse-mode automatic differentiation and its tiny neural networks library',
+    author='Théo Morales',
     license='MIT',
     install_requires=['tqdm', 'numpy'],
 )

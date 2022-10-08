@@ -13,11 +13,11 @@ Tests !
 import unittest
 import random
 
-from autograd import Value
-import autograd
+from alumette import Value
+import alumette
 
 
-class TestAutoGrad(unittest.TestCase):
+class TestAutograd(unittest.TestCase):
     def test_int_linear(self):
         a, b, c = (
             Value(random.randint(-100, 100)),
@@ -144,6 +144,11 @@ class TestAutoGrad(unittest.TestCase):
         self.assertAlmostEqual(c.grad, -exp * a.data * (b.data - c.data) ** (exp - 1))
         self.assertAlmostEqual(d.grad, 1 / denom)
 
+    def test_add_self(self):
+        a = Value(random.uniform(-100, 100))
+        (a+a+a).backward()
+        self.assertEqual(a.grad, 3)
+
     def test_r_add(self):
         a = Value(random.uniform(-100, 100))
         b = random.uniform(-100, 100)
@@ -225,15 +230,15 @@ class TestAutoGrad(unittest.TestCase):
 
     def test_relu_op_backward(self):
         a = Value(random.uniform(0, 1000))
-        L = autograd.engine.ReLUOp.act(a)
+        L = alumette.engine.ReLUOp.act(a)
         L.backward()
         self.assertEqual(a.grad, 1)
         a = Value(random.uniform(-10000, 0))
-        L = autograd.engine.ReLUOp.act(a)
+        L = alumette.engine.ReLUOp.act(a)
         L.backward()
         self.assertEqual(a.grad, 0)
         a = Value(random.uniform(-100, 100))
-        L = autograd.engine.ReLUOp.act(a)
+        L = alumette.engine.ReLUOp.act(a)
         L.backward()
         self.assertEqual(a.grad, 1 if a.data > 0 else 0)
 
@@ -254,51 +259,40 @@ class TestAutoGrad(unittest.TestCase):
 
     def test_MSE_relu(self):
         a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
-        (autograd.engine.ReLUOp.act((a - b)) ** 2).backward()
+        (alumette.engine.ReLUOp.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
             2
-            * autograd.engine.ReLUOp.act(a - b).data
+            * alumette.engine.ReLUOp.act(a - b).data
             * (1 if (a.data - b.data) > 0 else 0),
         )
         self.assertEqual(
             b.grad,
             -2
-            * autograd.engine.ReLUOp.act(a - b).data
+            * alumette.engine.ReLUOp.act(a - b).data
             * (1 if (a.data - b.data) > 0 else 0),
         )
 
     def test_tanh_op_backward(self):
         a = Value(random.uniform(-100, 100))
-        (autograd.engine.TanhOp.act(a)).backward()
-        self.assertEqual(a.grad, 1 - (autograd.engine.TanhOp.act(a).data ** 2))
+        (alumette.engine.TanhOp.act(a)).backward()
+        self.assertEqual(a.grad, 1 - (alumette.engine.TanhOp.act(a).data ** 2))
 
     def test_MSE_tanh(self):
         a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
-        (autograd.engine.TanhOp.act((a - b)) ** 2).backward()
+        (alumette.engine.TanhOp.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
             2
-            * autograd.engine.TanhOp.act(a - b).data
-            * (1 - (autograd.engine.TanhOp.act(a - b).data ** 2)),
+            * alumette.engine.TanhOp.act(a - b).data
+            * (1 - (alumette.engine.TanhOp.act(a - b).data ** 2)),
         )
         self.assertEqual(
             b.grad,
             -2
-            * autograd.engine.TanhOp.act(a - b).data
-            * (1 - (autograd.engine.TanhOp.act(a - b).data ** 2)),
+            * alumette.engine.TanhOp.act(a - b).data
+            * (1 - (alumette.engine.TanhOp.act(a - b).data ** 2)),
         )
-
-
-#     def test_two_layers_RELU_MSE(self):
-# a, b, c, d, e = Value(random.uniform(-1, 1)), Value(random.uniform(-1, 1)), Value(random.uniform(-1, 1)), Value(random.uniform(-1, 1)), Value(random.uniform(-1, 1))
-# bias_a, bias_b, bias_c, bias_d, bias_e = Value(random.uniform(-1, 1))
-# input_a, input_b = random.uniform(-10, 10), random.uniform(-10, 10)
-# forward_pass =
-# L.backward()
-# self.assertEqual(a.grad, 2*autograd.engine.ReLUOp.act(a-b).data*(1 if a.data > 0 else 0))
-# self.assertEqual(b.grad, 2*autograd.engine.ReLUOp.act(a-b).data*(1 if b.data > 0 else 0))
-
 
 if __name__ == "__main__":
     unittest.main()

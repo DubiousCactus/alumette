@@ -10,8 +10,8 @@
 Small polynomial curve fitting example.
 """
 
-from autograd import Value
-from autograd.nn import NeuralNet, Layer, MSE, SGD
+from alumette import Value
+from alumette.nn import NeuralNet, Layer, MSE, SGD
 
 from tqdm import tqdm, trange
 
@@ -20,7 +20,7 @@ import random
 class MyNet(NeuralNet):
     def __init__(self) -> None:
         super().__init__()
-        self.layer1 = Layer(1, 5, activation="tanh")
+        self.layer1 = Layer(1, 5, activation="relu")
         # self.layer2 = Layer(10, 10, activation="tanh")
         self.layer3 = Layer(5, 1, activation="identity")
 
