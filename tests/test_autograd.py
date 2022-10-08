@@ -11,46 +11,175 @@ Tests !
 """
 
 import unittest
+import random
 
-from autograd import Value, grad
+from autograd import Value
+import autograd
+
 
 class TestAutoGrad(unittest.TestCase):
-    def test_1(self):
-        a, b, c = Value(2), Value(-3), Value(10)
-        d = a*b + c
-        self.assertEqual(a.grad, None)
-        self.assertEqual(b.grad, None)
-        self.assertEqual(c.grad, None)
-        print()
-        grad(d)
-        self.assertAlmostEqual(c.grad, 1)
-        self.assertAlmostEqual(a.grad, b.data)
-        self.assertAlmostEqual(b.grad, a.data)
+    def test_int_linear(self):
+        a, b, c = Value(random.randint(-100, 100)), Value(random.randint(-100, 100)), Value(random.randint(-100, 100))
+        d = a * b + c
+        self.assertEqual(a.grad, 0)
+        self.assertEqual(b.grad, 0)
+        self.assertEqual(c.grad, 0)
+        d.backward()
+        self.assertEqual(c.grad, 1)
+        self.assertEqual(a.grad, b.data)
+        self.assertEqual(b.grad, a.data)
 
-    def test_2(self):
-        a, b, c = Value(-8), Value(-2), Value(4)
-        d = (a+b) * c
-        self.assertEqual(a.grad, None)
-        self.assertEqual(b.grad, None)
-        self.assertEqual(c.grad, None)
-        print()
-        grad(d)
-        self.assertAlmostEqual(c.grad, a.data+b.data)
-        self.assertAlmostEqual(a.grad, c.data)
-        self.assertAlmostEqual(b.grad, c.data)
+    def test_float_linear(self):
+        a, b, c = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        d = a * b + c
+        self.assertEqual(a.grad, 0)
+        self.assertEqual(b.grad, 0)
+        self.assertEqual(c.grad, 0)
+        d.backward()
+        self.assertEqual(c.grad, 1)
+        self.assertEqual(a.grad, b.data)
+        self.assertEqual(b.grad, a.data)
 
-    def test_3(self):
-        a, b, c, d = Value(2), Value(-3), Value(10), Value(-8)
-        L = d*(c+(a*b))
-        self.assertEqual(a.grad, None)
-        self.assertEqual(b.grad, None)
-        self.assertEqual(c.grad, None)
-        self.assertEqual(d.grad, None)
-        grad(L)
-        self.assertAlmostEqual(d.grad,(a.data*b.data)+c.data)
-        self.assertAlmostEqual(c.grad, d.data)
-        self.assertAlmostEqual(b.grad, a.data*d.data)
-        self.assertAlmostEqual(a.grad, b.data*d.data)
+    def test_int_linear_2(self):
+        a, b, c = Value(random.randint(-100, 100)), Value(random.randint(-100, 100)), Value(random.randint(-100, 100))
+        d = (a + b) * c
+        self.assertEqual(a.grad, 0)
+        self.assertEqual(b.grad, 0)
+        self.assertEqual(c.grad, 0)
+        d.backward()
+        self.assertEqual(c.grad, a.data + b.data)
+        self.assertEqual(a.grad, c.data)
+        self.assertEqual(b.grad, c.data)
 
-if __name__ == '__main__':
+    def test_float_linear_2(self):
+        a, b, c = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        d = (a + b) * c
+        self.assertEqual(a.grad, 0)
+        self.assertEqual(b.grad, 0)
+        self.assertEqual(c.grad, 0)
+        d.backward()
+        self.assertEqual(c.grad, a.data + b.data)
+        self.assertEqual(a.grad, c.data)
+        self.assertEqual(b.grad, c.data)
+
+    def test_int_chain(self):
+        a, b, c, d = Value(random.randint(-100, 100)), Value(random.randint(-100, 100)), Value(random.randint(-100, 100)), Value(random.randint(-100, 100))
+        L = d * (c + (a * b))
+        self.assertEqual(a.grad, 0)
+        self.assertEqual(b.grad, 0)
+        self.assertEqual(c.grad, 0)
+        self.assertEqual(d.grad, 0)
+        L.backward()
+        self.assertEqual(d.grad, (a.data * b.data) + c.data)
+        self.assertEqual(c.grad, d.data)
+        self.assertEqual(b.grad, a.data * d.data)
+        self.assertEqual(a.grad, b.data * d.data)
+
+    def test_float_chain(self):
+        a, b, c, d = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        L = d * (c + (a * b))
+        self.assertEqual(a.grad, 0)
+        self.assertEqual(b.grad, 0)
+        self.assertEqual(c.grad, 0)
+        self.assertEqual(d.grad, 0)
+        L.backward()
+        self.assertEqual(d.grad, (a.data * b.data) + c.data)
+        self.assertEqual(c.grad, d.data)
+        self.assertEqual(b.grad, a.data * d.data)
+        self.assertEqual(a.grad, b.data * d.data)
+
+    def test_int_squared_chain(self):
+        a, b, c, d = Value(random.randint(-100, 100)), Value(random.randint(-100, 100)), Value(random.randint(-100, 100)), Value(random.randint(-100, 100))
+        exp, denom = 3, 8
+        L = a*((b-c)**3) + (d/8)
+        L.backward()
+        self.assertEqual(a.grad, (b.data-c.data)**exp)
+        self.assertEqual(b.grad, exp*a.data*(b.data-c.data)**(exp-1))
+        self.assertEqual(c.grad, -exp*a.data*(b.data-c.data)**(exp-1))
+        self.assertEqual(d.grad, 1/denom)
+
+    def test_float_squared_chain(self):
+        a, b, c, d = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        exp, denom = 3, 8
+        L = a*((b-c)**3) + (d/8)
+        L.backward()
+        self.assertAlmostEqual(a.grad, (b.data-c.data)**exp)
+        self.assertAlmostEqual(b.grad, exp*a.data*(b.data-c.data)**(exp-1))
+        self.assertAlmostEqual(c.grad, -exp*a.data*(b.data-c.data)**(exp-1))
+        self.assertAlmostEqual(d.grad, 1/denom)
+
+    def test_r_add(self):
+        a = Value(random.uniform(-100, 100))
+        b= random.uniform(-100, 100)
+        L = b + a
+        L.backward()
+        self.assertEqual(a.grad, 1)
+
+    def test_r_sub(self):
+        a = Value(random.uniform(-100, 100))
+        b= random.uniform(-100, 100)
+        L = b - a
+        L.backward()
+        self.assertEqual(a.grad, -1)
+
+    def test_r_mul(self):
+        a = Value(random.uniform(-100, 100))
+        b= random.uniform(-100, 100)
+        L = b * a
+        L.backward()
+        self.assertEqual(a.grad, b)
+
+    def test_neg_r_mul(self):
+        a = Value(random.uniform(-100, 100))
+        b= random.uniform(-100, 100)
+        L = (-b) * a
+        L.backward()
+        self.assertEqual(a.grad, -b)
+
+    def test_div(self):
+        a, b = Value(random.uniform(-10, 10)), Value(random.uniform(-10, 10))
+        L = a / b
+        L.backward()
+        self.assertAlmostEqual(a.grad, 1/b.data, places=4)
+        self.assertAlmostEqual(b.grad, -a.data/(b.data**2), places=4)
+
+    def test_large_div(self):
+        a, b = Value(random.uniform(-1000, 1000)), Value(random.uniform(-1000, 1000))
+        L = a / b
+        L.backward()
+        self.assertAlmostEqual(a.grad, 1/b.data, places=4)
+        self.assertAlmostEqual(b.grad, -a.data/(b.data**2), places=4)
+
+    def test_r_ops(self):
+        a, b, c = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100)), Value(random.uniform(-10, 10))
+        d, e, f = random.uniform(-100, 100),random.uniform(-100, 100),random.uniform(-10, 10)
+        L = (-d * (e - a)) + ((f + b) / (c**f))
+        L.backward()
+        self.assertEqual(a.grad, d)
+        self.assertEqual(b.grad, 1/(c.data**f))
+        self.assertAlmostEqual(c.grad, -f*(c.data**(-f-1))*(f+b.data), places=4)
+
+    def test_relu_op(self):
+        a = Value(random.uniform(0, 1000))
+        L = autograd.engine.ReLUOp.act(a)
+        L.backward()
+        self.assertEqual(a.grad, a.data)
+        a = Value(random.uniform(-10000, 0))
+        L = autograd.engine.ReLUOp.act(a)
+        L.backward()
+        self.assertEqual(a.grad, 0)
+        a = Value(random.uniform(-100, 100))
+        L = autograd.engine.ReLUOp.act(a)
+        L.backward()
+        self.assertEqual(a.grad, max(0, a.data))
+
+    def test_MSE(self):
+        a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        L = (a-b)**2
+        L.backward()
+        self.assertEqual(a.grad, 2*(a.data*b.data))
+        self.assertEqual(b.grad, -2*(a.data-b.data))
+
+
+if __name__ == "__main__":
     unittest.main()
