@@ -22,6 +22,7 @@ class Module:
     def zero_grad(self):
         for p in self.parameters():
             p._grad = 0
+            p._visited = False
 
     def parameters(self) -> List[Value]:
         return []
@@ -135,3 +136,4 @@ class SGD:
     def zero_grad(self):
         for p in self._params:
             p._grad = 0
+            p._visited = False
