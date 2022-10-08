@@ -254,9 +254,7 @@ class TestAutoGrad(unittest.TestCase):
 
     def test_MSE_relu(self):
         a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
-        a, b = Value(6), Value(3)
-        L = autograd.engine.ReLUOp.act((a - b)) ** 2
-        L.backward()
+        (autograd.engine.ReLUOp.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
             2
@@ -272,14 +270,12 @@ class TestAutoGrad(unittest.TestCase):
 
     def test_tanh_op_backward(self):
         a = Value(random.uniform(-100, 100))
-        L = autograd.engine.TanhOp.act(a)
-        L.backward()
+        (autograd.engine.TanhOp.act(a)).backward()
         self.assertEqual(a.grad, 1 - (autograd.engine.TanhOp.act(a).data ** 2))
 
     def test_MSE_tanh(self):
         a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
-        L = autograd.engine.TanhOp.act((a - b)) ** 2
-        L.backward()
+        (autograd.engine.TanhOp.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
             2

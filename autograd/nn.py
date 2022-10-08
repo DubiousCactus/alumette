@@ -28,10 +28,10 @@ class Module:
 
 
 class Neuron(Module):
-    def __init__(self, input_dim: int, bias=True, activation="relu") -> None:
+    def __init__(self, input_dim: int, bias=True, activation="identity") -> None:
         self._synapses = [Value(random.uniform(-1, 1)) for _ in range(input_dim)]
         self._bias = Value(random.uniform(-1, 1)) if bias else None
-        self._activation = "relu"
+        self._activation = activation
 
     def __call__(self, inputs: Union[Value, List]) -> Any:
         output = Value(0)
