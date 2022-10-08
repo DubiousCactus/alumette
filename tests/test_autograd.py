@@ -136,6 +136,24 @@ class TestAutoGrad(unittest.TestCase):
         L.backward()
         self.assertEqual(a.grad, -b)
 
+    def test_positive_pow(self):
+        a = Value(random.uniform(-100, 100))
+        b = random.uniform(0, 100)
+        (a**b).backward()
+        self.assertEqual(a.grad, b*(a.data**(b-1)))
+
+    def test_negative_pow(self):
+        a = Value(random.uniform(-100, 100))
+        b = random.uniform(-1000, -1)
+        (a**b).backward()
+        self.assertEqual(a.grad, b*(a.data**(b-1)))
+
+    def test_zero_pow(self):
+        a = Value(random.uniform(-100, 100))
+        b = 0
+        (a**b).backward()
+        self.assertEqual(a.grad, 0)
+
     def test_div(self):
         a, b = Value(random.uniform(-10, 10)), Value(random.uniform(-10, 10))
         L = a / b
@@ -163,7 +181,7 @@ class TestAutoGrad(unittest.TestCase):
         a = Value(random.uniform(0, 1000))
         L = autograd.engine.ReLUOp.act(a)
         L.backward()
-        self.assertEqual(a.grad, a.data)
+        self.assertEqual(a.grad, 1)
         a = Value(random.uniform(-10000, 0))
         L = autograd.engine.ReLUOp.act(a)
         L.backward()
@@ -171,14 +189,31 @@ class TestAutoGrad(unittest.TestCase):
         a = Value(random.uniform(-100, 100))
         L = autograd.engine.ReLUOp.act(a)
         L.backward()
-        self.assertEqual(a.grad, max(0, a.data))
+        self.assertEqual(a.grad, 1 if a.data > 0 else 0)
 
     def test_MSE(self):
         a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
         L = (a-b)**2
         L.backward()
-        self.assertEqual(a.grad, 2*(a.data*b.data))
+        self.assertEqual(a.grad, 2*(a.data-b.data))
         self.assertEqual(b.grad, -2*(a.data-b.data))
+
+    def test_pow_diff(self):
+        a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        c = random.uniform(-100, 100)
+        L = (a-b)**c
+        L.backward()
+        self.assertEqual(a.grad, c*((a.data-b.data)**(c-1)))
+        self.assertEqual(b.grad, -c*((a.data-b.data)**(c-1)))
+
+    def test_MSE_relu(self):
+        a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        L = autograd.engine.ReLUOp.act((a-b))**2
+        L.backward()
+        self.assertEqual(a.grad, 2*autograd.engine.ReLUOp.act(a-b).data*(1 if a.data > 0 else 0))
+        self.assertEqual(b.grad, 2*autograd.engine.ReLUOp.act(a-b).data*(1 if b.data > 0 else 0))
+
+
 
 
 if __name__ == "__main__":
