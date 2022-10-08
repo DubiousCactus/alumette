@@ -174,11 +174,9 @@ class ReLUOp(Op):
     @staticmethod
     def backward(node: Value) -> None:
         parents = node.parents
-        assert len(parents) == 1, "NegOp has more than one parent!"
-        # TODO: Just assign node.data? Because how could the output node of ReLU be > 0??
+        assert len(parents) == 1, "ReLUOp has more than one parent!"
         assert node.data >= 0, "ReLU's output node has negative value"
-        # parent._grad += min(0, node.data)
-        parents[0]._grad += 1 if node.data > 0 else 0
+        parents[0]._grad += (1 if node.data > 0 else 0) * node._grad
 
     @staticmethod
     def act(node: Value) -> Value:
@@ -189,8 +187,8 @@ class TanhOp(Op):
     @staticmethod
     def backward(node: Value) -> None:
         parents = node.parents
-        assert len(parents) == 1, "NegOp has more than one parent!"
-        parents[0]._grad += 1 - node.data**2
+        assert len(parents) == 1, "TanhOp has more than one parent!"
+        parents[0]._grad += (1 - node.data**2) * node._grad
 
     @staticmethod
     def act(node: Value) -> Value:
