@@ -14,7 +14,7 @@ from typing import List, Any
 
 from numpy import require
 
-from .engine import Tensor
+from .engine import Value
 
 import math
 import abc
@@ -29,20 +29,20 @@ class Op(abc.ABC):
 
 class LogOp(Op):
     @staticmethod
-    def backward(node: Tensor) -> None:
+    def backward(node: Value) -> None:
         parents = node.parents
         assert len(parents) == 1, "LogOp has more than one parent!"
         # TODO: Write unit test
         parents[0]._grad += 1/node.data * node.grad
 
     @staticmethod
-    def act(node: Tensor) -> Tensor:
-        return Tensor(math.log(node.data), _parents=(node,), _grad_fn=LogOp.backward)
+    def act(node: Value) -> Value:
+        return Value(math.log(node.data), _parents=(node,), _grad_fn=LogOp.backward)
 
 
 class ExpOp(Op):
     @staticmethod
-    def backward(node: Tensor) -> None:
+    def backward(node: Value) -> None:
         # TODO: Write unit test
         parents = node.parents
         assert len(parents) == 1, "ExpOp has more than one parent!"
@@ -50,36 +50,36 @@ class ExpOp(Op):
 
 
     @staticmethod
-    def act(node: Tensor) -> Tensor:
-        return Tensor(math.exp(node.data), _parents=(node,), _grad_fn=ExpOp.backward)
+    def act(node: Value) -> Value:
+        return Value(math.exp(node.data), _parents=(node,), _grad_fn=ExpOp.backward)
 
 
 class SoftPlusOp(Op):
     @staticmethod
-    def backward(node: Tensor) -> None:
+    def backward(node: Value) -> None:
         # TODO: Write unit test
         parents = node.parents
         assert len(parents) == 1, "SoftPLusOp has more than one parent!"
         parents[0]._grad += 1/(1+math.exp(-node.data)) * node.grad
 
     @staticmethod
-    def act(node: Tensor) -> Tensor:
+    def act(node: Value) -> Value:
         """
         SoftPlus is a smooth approximation to the ReLU function and can be used to constrain the
         output of a machine to always be positive.
         """
-        exp = ExpOp.act(Tensor(node.data, requires_grad=False))
+        exp = ExpOp.act(Value(node.data, requires_grad=False))
         exp.requires_grad = False
         log = LogOp.act(1 + exp)
         log.requires_grad = False
-        return Tensor(
+        return Value(
             log.data,
             _parents=(node,),
             _grad_fn=SoftPlusOp.backward,
         )
 
 
-def mean(values: List[Tensor]) -> Tensor:
+def mean(values: List[Value]) -> Value:
     # TODO: Write an op to reduce number of nodes
     # TODO: Write a test for this
     values = values if isinstance(values, list) else [values]
@@ -88,28 +88,28 @@ def mean(values: List[Tensor]) -> Tensor:
 
 class ReLUOp(Op):
     @staticmethod
-    def backward(node: Tensor) -> None:
+    def backward(node: Value) -> None:
         parents = node.parents
         assert len(parents) == 1, "ReLUOp has more than one parent!"
         assert node.data >= 0, "ReLU's output node has negative value"
         parents[0]._grad += (1 if node.data > 0 else 0) * node._grad
 
     @staticmethod
-    def act(node: Tensor) -> Tensor:
-        return Tensor(max(0, node.data), _parents=(node,), _grad_fn=ReLUOp.backward)
+    def act(node: Value) -> Value:
+        return Value(max(0, node.data), _parents=(node,), _grad_fn=ReLUOp.backward)
 
 
 class TanhOp(Op):
     @staticmethod
-    def backward(node: Tensor) -> None:
+    def backward(node: Value) -> None:
         parents = node.parents
         assert len(parents) == 1, "TanhOp has more than one parent!"
         parents[0]._grad += (1 - node.data**2) * node._grad
 
     @staticmethod
-    def act(node: Tensor) -> Tensor:
+    def act(node: Value) -> Value:
         n = node.data
         t = (math.exp(max(min(2 * n, 709), -708)) - 1) / (
             math.exp(max(min(2 * n, 709), -708)) + 1
         )
-        return Tensor(t, _parents=(node,), _grad_fn=TanhOp.backward)
+        return Value(t, _parents=(node,), _grad_fn=TanhOp.backward)

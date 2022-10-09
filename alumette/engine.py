@@ -45,21 +45,18 @@ class Value:
         self._grad = 0.0
         self._grad_fn = _grad_fn
         self.requires_grad = requires_grad
-        self._visited = False
 
     def __repr__(self) -> str:
         return f"Value(data={self.data}, grad={self._grad}, _grad_fn={self._grad_fn})"
 
     def __add__(self, other):
         other = other if isinstance(other, Value) else Value(other, requires_grad=False)
-        self._visited = False
         return Value(
             self.data + other.data, _parents=(self, other), _grad_fn=AddOp.backward
         )
 
     def __mul__(self, other):
         other = other if isinstance(other, Value) else Value(other, requires_grad=False)
-        self._visited = False
         return Value(
             self.data * other.data, _parents=(self, other), _grad_fn=MulOp.backward
         )
@@ -69,7 +66,6 @@ class Value:
             int,
             float,
         ], "__pow__ only handles float or int exponents"
-        self._visited = False
         return Value(
             self.data**other,
             _parents=(self, Value(other, requires_grad=False)),
@@ -78,33 +74,30 @@ class Value:
 
     def __neg__(self):
         # Could to return self * -1 but that would result in one more function call...
-        self._visited = False
         return self * -1
 
     def __sub__(self, other):
         other = other if isinstance(other, Value) else Value(other, requires_grad=False)
-        self._visited = False
         return self + (-other)
         # return Value(-self.data, _grad_fn=NegOp.backward)
 
     def __truediv__(self, other):
         other = other if isinstance(other, Value) else Value(other, requires_grad=False)
         assert other.data != 0, "Zero division encountered!"
-        self._visited = False
         return self * other**-1
         # return Value(self.data / other.data, _parents=(self, other), _grad_fn=DivOp.backward)
 
     def __radd__(self, other):  # other + self
-        self._visited = False
         return self + other
 
     def __rsub__(self, other):  # other - self
-        self._visited = False
         return (-self) + other
 
     def __rmul__(self, other):
-        self._visited = False
         return self * other
+
+    def __rtruediv__(self, other): #other/self
+        return self ** -1 * other
 
 #     def __eq__(self, __o: object) -> bool:
         # if type(__o) == float:
@@ -120,24 +113,6 @@ class Value:
 #         return hash(self.data) + sum([hash(o) for o in self.parents])
 
     def backward(self):
-        # TODO: Write a test with a cyclic graph (or almost cyclic but you know, one that needs
-        # topology sorting). This is suspiciously more efficient than backward_with_topo
-        def _backward(node: Value):
-            for p in node.parents:
-                if p.requires_grad and not p._visited:
-                    p._grad_fn(p)
-                    p._visited = True
-                    _backward(p)
-
-        # import time
-        # start = time.perf_counter_ns()
-        self._grad = 1
-        self._grad_fn(self) # Backprop to parents
-        _backward(self)
-        # end = time.perf_counter_ns()
-        # print(f"Clock time of backward1: {(end-start)*(1e-6)}ms")
-
-    def backward_with_topo(self):
         topology = []
         visited = set()
         def build_topology(node: Value) -> None:
@@ -149,14 +124,9 @@ class Value:
                 topology.append(node)
 
         self._grad = 1
-        # import time
-        # start = time.perf_counter_ns()
         build_topology(self)
         for node in reversed(topology):
             node._grad_fn(node)
-        # end = time.perf_counter_ns()
-        # print(f"Clock time of backward1: {(end-start)*(1e-6)}ms")
-
 
     @property
     def parents(self) -> Tuple:
