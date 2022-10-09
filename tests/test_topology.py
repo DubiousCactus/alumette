@@ -8,13 +8,13 @@
 import unittest
 import torch
 
-from alumette import Value
+from alumette import Tensor
 from alumette import relu
 
 class TestTopology(unittest.TestCase):
     def test_sanity_check(self):
 
-        x = Value(-4.0)
+        x = Tensor(-4.0)
         z = 2 * x + 2 + x
         q = relu.act(z) + z * x
         h = relu.act(z * z)
@@ -37,8 +37,8 @@ class TestTopology(unittest.TestCase):
 
     def test_more_ops(self):
 
-        a = Value(-4.0)
-        b = Value(2.0)
+        a = Tensor(-4.0)
+        b = Tensor(2.0)
         c = a + b
         d = a * b + b**3
         c += c + 1
