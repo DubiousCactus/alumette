@@ -11,4 +11,11 @@ Karpathy's autograd replica.
 """
 
 from .engine import Value
-from .ops import mean, ReLUOp as relu, TanhOp as tanh
+from .ops import (
+    mean,
+    ReLUOp as relu,
+    TanhOp as tanh,
+    SoftPlusOp as softplus,
+    ExpOp as exp,
+    LogOp as log,
+)

@@ -42,7 +42,7 @@ class Neuron(Module):
             inputs = [inputs]
         assert isinstance(inputs, list) or isinstance(
             inputs, Value
-        ), "Neuron inputs should be a Value or a list!"
+        ) or isinstance(inputs, tuple), "Neuron inputs should be a Value or a list!"
         assert len(inputs) == len(
             self._synapses
         ), "Dim of inputs doesn't match dim of synapses!"
@@ -83,37 +83,8 @@ class Layer(Module):
         return [param for n in self.neurons for param in n.parameters()]
 
 
-class MLP(Module):
-    def __init__(
-        self,
-        input_dim: int,
-        layer_width: int,
-        output_dim: int,
-        n_layers: int,
-        activation="relu",
-        output_activation="identity",
-    ) -> None:
-        self.layers = [Layer(input_dim, layer_width, activation=activation)]
-        for _ in range(n_layers - 2):
-            self.layers += [Layer(layer_width, layer_width, activation=activation)]
-        self.layers += [
-            Layer(layer_width, output_dim, activation=output_activation),
-        ]
-
-    def forward(self, x):
-        return reduce(lambda layer_n, layer_n1: layer_n1(layer_n(x)), self.layers)
-
-    def parameters(self) -> List[Value]:
-        return reduce(
-            lambda layer_n, layer_n1: layer_n.parameters() + layer_n1.parameters(),
-            self.layers,
-        )
-
-
 class NeuralNet(abc.ABC, Module):
     def __call__(self, *args: Any, **kwds: Any) -> Any:
-        # TODO: Implicitely convert inputs to Values?
-        assert isinstance(args[0], Value), "Input must be a Value object!"
         return self.forward(*args)
 
     @abc.abstractmethod
@@ -134,6 +105,30 @@ class NeuralNet(abc.ABC, Module):
             return params
 
         return find_params(self)
+
+class MLP(NeuralNet):
+    def __init__(
+        self,
+        input_dim: int,
+        layer_width: int,
+        output_dim: int,
+        n_layers: int,
+        activation="relu",
+        output_activation="identity",
+    ) -> None:
+        self.layers = [Layer(input_dim, layer_width, activation=activation)]
+        for _ in range(n_layers - 2):
+            self.layers += [Layer(layer_width, layer_width, activation=activation)]
+        self.layers += [
+            Layer(layer_width, output_dim, activation=output_activation),
+        ]
+
+    def forward(self, x):
+        # TODO: return reduce(lambda layer_n, layer_n1: layer_n1(layer_n(x)), self.layers)
+        y = x
+        for l in self.layers:
+            y = l(y)
+        return y
 
 
 def MSE(x: Union[List[Value], Value], y: Union[List[Value], Value]):
