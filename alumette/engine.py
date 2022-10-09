@@ -62,17 +62,14 @@ class Tensor:
         self._grad = 0
         self._grad_fn = _grad_fn
         self.requires_grad = requires_grad
-        self._visited = False
 
     def __repr__(self) -> str:
         return f"Tensor(data={self.data}, grad={self._grad}, _grad_fn={self._grad_fn})"
 
     def __add__(self, other):
-        print(f"Other: {other}")
         other = (
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
-        self._visited = False
         return Tensor(
             self.data + other.data, _parents=(self, other), _grad_fn=AddOp.backward
         )
@@ -81,7 +78,6 @@ class Tensor:
         other = (
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
-        self._visited = False
         return Tensor(
             self.data * other.data, _parents=(self, other), _grad_fn=MulOp.backward
         )
@@ -91,7 +87,6 @@ class Tensor:
             int,
             float,
         ], "__pow__ only handles float or int exponents"
-        self._visited = False
         return Tensor(
             self.data**other,
             _parents=(self, Tensor(other, requires_grad=False)),
@@ -100,14 +95,12 @@ class Tensor:
 
     def __neg__(self):
         # Could to return self * -1 but that would result in one more function call...
-        self._visited = False
         return self * -1
 
     def __sub__(self, other):
         other = (
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
-        self._visited = False
         return self + (-other)
         # return Tensor(-self.data, _grad_fn=NegOp.backward)
 
@@ -116,51 +109,35 @@ class Tensor:
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
         # assert other.data != 0, "Zero division encountered!"
-        self._visited = False
         return self * other**-1
         # return Tensor(self.data / other.data, _parents=(self, other), _grad_fn=DivOp.backward)
 
     def __radd__(self, other):  # other + self
-        self._visited = False
-        print("Other in radd",other)
         return self + other
 
     def __rsub__(self, other):  # other - self
-        self._visited = False
         return (-self) + other
 
     def __rmul__(self, other):
-        self._visited = False
         return self * other
 
-    #     def __eq__(self, __o: object) -> bool:
-    # if type(__o) == float:
-    # return self.data == __o
-    # elif isinstance(__o, Tensor):
-    # return self.data == __o.data
-    # else:
-    # raise NotImplementedError(
-    # f"Comparing Tensor with type {type(__o)} is not implemented"
-    # )
+    def __rtruediv__(self, other): #other/self
+        return self ** -1 * other
+
+#     def __eq__(self, __o: object) -> bool:
+        # if type(__o) == float:
+            # return self.data == __o
+        # elif isinstance(__o, Value):
+            # return self.data == __o.data
+        # else:
+            # raise NotImplementedError(
+                # f"Comparing Value with type {type(__o)} is not implemented"
+            # )
 
     # def __hash__(self) -> int:
     #         return hash(self.data) + sum([hash(o) for o in self.parents])
 
     def backward(self):
-        # TODO: Write a test with a cyclic graph (or almost cyclic but you know, one that needs
-        # topology sorting). This is suspiciously more efficient than backward_with_topo
-        def _backward(node: Tensor):
-            for p in node.parents:
-                if p.requires_grad and not p._visited:
-                    p._grad_fn(p)
-                    p._visited = True
-                    _backward(p)
-
-        self._grad = 1.0
-        self._grad_fn(self)  # Backprop to parents
-        _backward(self)
-
-    def backward_with_topo(self):
         topology = []
         visited = set()
 
