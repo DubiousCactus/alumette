@@ -251,7 +251,7 @@ class TestAutograd(unittest.TestCase):
 
     def test_pow_diff(self):
         a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
-        c = int(random.uniform(-100, 100))
+        c = int(random.uniform(-10, 10))
         L = (a - b) ** c
         L.backward()
         self.assertEqual(a.grad, c * ((a.data - b.data) ** (c - 1)))

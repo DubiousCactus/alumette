@@ -12,7 +12,7 @@ Test the neural network library on a toy regression problem.
 import unittest
 import random
 
-from alumette import Value
+from alumette import Tensor
 from alumette.nn import NeuralNet, Layer, SGD, MSE
 
 from tqdm import trange
@@ -50,8 +50,8 @@ class TestNeuralNet(unittest.TestCase):
             random.shuffle(xs)
             ys = [test_func_1(x) for x in xs]
             for x, y in zip(xs, ys):
-                y_hat = nn(Value(x))[0]
-                loss = MSE(y_hat, Value(y))
+                y_hat = nn(Tensor(x))[0]
+                loss = MSE(y_hat, Tensor(y))
                 tot_loss += loss
             tot_loss.backward()
             opt.step()
@@ -67,8 +67,8 @@ class TestNeuralNet(unittest.TestCase):
 
         test_loss = .0
         for x, y in zip(xs, ys):
-            y_hat = nn(Value(x))[0]
-            loss = MSE(y_hat, Value(y))
+            y_hat = nn(Tensor(x))[0]
+            loss = MSE(y_hat, Tensor(y))
             test_loss += loss
         print(f"--> Final test loss: {test_loss.data/len(xs):.4f}")
 
