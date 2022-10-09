@@ -107,9 +107,7 @@ class Tensor:
         other = (
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
-        # assert other.data != 0, "Zero division encountered!"
         return self * other**-1
-        # return Tensor(self.data / other.data, _parents=(self, other), _grad_fn=DivOp.backward)
 
     def __radd__(self, other):  # other + self
         return self + other
@@ -168,6 +166,10 @@ class Tensor:
     @property
     def dtype(self) -> Tuple:
         return self.data.dtype
+
+    def item(self) -> float:
+        assert len(self.data.shape) == 1
+        return self.data[0]
 
 
 class AddOp(Op):
