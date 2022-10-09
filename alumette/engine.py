@@ -11,7 +11,6 @@ Autograd engine
 """
 
 import abc
-import math
 
 from typing import Any, Tuple
 
@@ -206,30 +205,3 @@ class PowOp(Op):
         parents[0]._grad += (
             parents[1].data * (parents[0].data ** (parents[1].data - 1)) * node._grad
         )
-
-
-class ReLUOp(Op):
-    @staticmethod
-    def backward(node: Value) -> None:
-        parents = node.parents
-        assert len(parents) == 1, "ReLUOp has more than one parent!"
-        assert node.data >= 0, "ReLU's output node has negative value"
-        parents[0]._grad += (1 if node.data > 0 else 0) * node._grad
-
-    @staticmethod
-    def act(node: Value) -> Value:
-        return Value(max(0, node.data), _parents=(node,), _grad_fn=ReLUOp.backward)
-
-
-class TanhOp(Op):
-    @staticmethod
-    def backward(node: Value) -> None:
-        parents = node.parents
-        assert len(parents) == 1, "TanhOp has more than one parent!"
-        parents[0]._grad += (1 - node.data**2) * node._grad
-
-    @staticmethod
-    def act(node: Value) -> Value:
-        n = node.data
-        t = (math.exp(max(min(2 * n, 709), -708)) - 1) / (math.exp(max(min(2 * n, 709), -708)) + 1)
-        return Value(t, _parents=(node,), _grad_fn=TanhOp.backward)

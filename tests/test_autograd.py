@@ -230,15 +230,15 @@ class TestAutograd(unittest.TestCase):
 
     def test_relu_op_backward(self):
         a = Value(random.uniform(0, 1000))
-        L = alumette.engine.ReLUOp.act(a)
+        L = alumette.relu.act(a)
         L.backward()
         self.assertEqual(a.grad, 1)
         a = Value(random.uniform(-10000, 0))
-        L = alumette.engine.ReLUOp.act(a)
+        L = alumette.relu.act(a)
         L.backward()
         self.assertEqual(a.grad, 0)
         a = Value(random.uniform(-100, 100))
-        L = alumette.engine.ReLUOp.act(a)
+        L = alumette.relu.act(a)
         L.backward()
         self.assertEqual(a.grad, 1 if a.data > 0 else 0)
 
@@ -259,39 +259,39 @@ class TestAutograd(unittest.TestCase):
 
     def test_MSE_relu(self):
         a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
-        (alumette.engine.ReLUOp.act((a - b)) ** 2).backward()
+        (alumette.relu.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
             2
-            * alumette.engine.ReLUOp.act(a - b).data
+            * alumette.relu.act(a - b).data
             * (1 if (a.data - b.data) > 0 else 0),
         )
         self.assertEqual(
             b.grad,
             -2
-            * alumette.engine.ReLUOp.act(a - b).data
+            * alumette.relu.act(a - b).data
             * (1 if (a.data - b.data) > 0 else 0),
         )
 
     def test_tanh_op_backward(self):
         a = Value(random.uniform(-100, 100))
-        (alumette.engine.TanhOp.act(a)).backward()
-        self.assertEqual(a.grad, 1 - (alumette.engine.TanhOp.act(a).data ** 2))
+        (alumette.tanh.act(a)).backward()
+        self.assertEqual(a.grad, 1 - (alumette.tanh.act(a).data ** 2))
 
     def test_MSE_tanh(self):
         a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
-        (alumette.engine.TanhOp.act((a - b)) ** 2).backward()
+        (alumette.tanh.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
             2
-            * alumette.engine.TanhOp.act(a - b).data
-            * (1 - (alumette.engine.TanhOp.act(a - b).data ** 2)),
+            * alumette.tanh.act(a - b).data
+            * (1 - (alumette.tanh.act(a - b).data ** 2)),
         )
         self.assertEqual(
             b.grad,
             -2
-            * alumette.engine.TanhOp.act(a - b).data
-            * (1 - (alumette.engine.TanhOp.act(a - b).data ** 2)),
+            * alumette.tanh.act(a - b).data
+            * (1 - (alumette.tanh.act(a - b).data ** 2)),
         )
 
 if __name__ == "__main__":

@@ -13,4 +13,4 @@ code ;)
 - [x] Write neural net example
 - [ ] Test gradients numerically
 - [ ] Implement a Tensor class
-- [ ] GPU acceleration
+- [ ] GPU acceleration (PyCuda?)

@@ -10,9 +10,11 @@
 Neural Nets yaaay.
 """
 
+from functools import reduce
 from typing import Any, List, Tuple, Union
 
-from .engine import Value, ReLUOp as ReLU, TanhOp as Tanh
+from .engine import Value
+import alumette
 
 import random
 import abc
@@ -50,9 +52,9 @@ class Neuron(Module):
             output += self._bias
         if self._activation == "relu":
             # TODO: Gradient for this? (done?)
-            output = ReLU.act(output)
+            output = alumette.relu.act(output)
         elif self._activation == "tanh":
-            output = Tanh.act(output)
+            output = alumette.tanh.act(output)
         elif self._activation == "identity":
             pass
         else:
@@ -81,6 +83,33 @@ class Layer(Module):
         return [param for n in self.neurons for param in n.parameters()]
 
 
+class MLP(Module):
+    def __init__(
+        self,
+        input_dim: int,
+        layer_width: int,
+        output_dim: int,
+        n_layers: int,
+        activation="relu",
+        output_activation="identity",
+    ) -> None:
+        self.layers = [Layer(input_dim, layer_width, activation=activation)]
+        for _ in range(n_layers - 2):
+            self.layers += [Layer(layer_width, layer_width, activation=activation)]
+        self.layers += [
+            Layer(layer_width, output_dim, activation=output_activation),
+        ]
+
+    def forward(self, x):
+        return reduce(lambda layer_n, layer_n1: layer_n1(layer_n(x)), self.layers)
+
+    def parameters(self) -> List[Value]:
+        return reduce(
+            lambda layer_n, layer_n1: layer_n.parameters() + layer_n1.parameters(),
+            self.layers,
+        )
+
+
 class NeuralNet(abc.ABC, Module):
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         # TODO: Implicitely convert inputs to Values?
@@ -105,6 +134,7 @@ class NeuralNet(abc.ABC, Module):
             return params
 
         return find_params(self)
+
 
 def MSE(x: Union[List[Value], Value], y: Union[List[Value], Value]):
     if isinstance(x, list) or isinstance(y, list):
