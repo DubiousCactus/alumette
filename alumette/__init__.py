@@ -10,7 +10,7 @@
 Karpathy's autograd replica.
 """
 
-from .engine import Value
+from .engine import Tensor
 from .ops import (
     mean,
     ReLUOp as relu,

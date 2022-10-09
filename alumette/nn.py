@@ -13,7 +13,7 @@ Neural Nets yaaay.
 from functools import reduce
 from typing import Any, List, Tuple, Union
 
-from .engine import Value
+from .engine import Tensor
 import alumette
 
 import random
@@ -26,23 +26,23 @@ class Module:
             p._grad = 0
             p._visited = False
 
-    def parameters(self) -> List[Value]:
+    def parameters(self) -> List[Tensor]:
         return []
 
 
 class Neuron(Module):
     def __init__(self, input_dim: int, bias=True, activation="identity") -> None:
-        self._synapses = [Value(random.uniform(-1, 1)) for _ in range(input_dim)]
-        self._bias = Value(random.uniform(-1, 1)) if bias else None
+        self._synapses = [Tensor(random.uniform(-1, 1)) for _ in range(input_dim)]
+        self._bias = Tensor(random.uniform(-1, 1)) if bias else None
         self._activation = activation
 
-    def __call__(self, inputs: Union[Value, List]) -> Any:
-        output = Value(0)
-        if isinstance(inputs, Value):
+    def __call__(self, inputs: Union[Tensor, List]) -> Any:
+        output = Tensor(0)
+        if isinstance(inputs, Tensor):
             inputs = [inputs]
         assert isinstance(inputs, list) or isinstance(
-            inputs, Value
-        ) or isinstance(inputs, tuple), "Neuron inputs should be a Value or a list!"
+            inputs, Tensor
+        ) or isinstance(inputs, tuple), "Neuron inputs should be a Tensor or a list!"
         assert len(inputs) == len(
             self._synapses
         ), "Dim of inputs doesn't match dim of synapses!"
@@ -63,7 +63,7 @@ class Neuron(Module):
             )
         return output
 
-    def parameters(self) -> List[Value]:
+    def parameters(self) -> List[Tensor]:
         return self._synapses + ([self._bias] if self._bias is not None else [])
 
 
@@ -79,7 +79,7 @@ class Layer(Module):
             outputs.append(n(inputs))
         return outputs
 
-    def parameters(self) -> List[Value]:
+    def parameters(self) -> List[Tensor]:
         return [param for n in self.neurons for param in n.parameters()]
 
 
@@ -91,8 +91,8 @@ class NeuralNet(abc.ABC, Module):
     def forward(self, *args: Any, **kwds: Any) -> Any:
         raise NotImplementedError
 
-    def parameters(self) -> List[Value]:
-        def find_params(obj: object) -> List[Value]:
+    def parameters(self) -> List[Tensor]:
+        def find_params(obj: object) -> List[Tensor]:
             if isinstance(obj, Layer):
                 return obj.parameters()
             params = []
@@ -131,19 +131,19 @@ class MLP(NeuralNet):
         return y
 
 
-def MSE(x: Union[List[Value], Value], y: Union[List[Value], Value]):
+def MSE(x: Union[List[Tensor], Tensor], y: Union[List[Tensor], Tensor]):
     if isinstance(x, list) or isinstance(y, list):
         assert type(x) is type(
             y
         ), "If one argument is a list, both arguments must be a list!"
-        assert isinstance(x, Value) and isinstance(
-            y, Value
-        ), "Arguments of MSE must be Value objects!"
+        assert isinstance(x, Tensor) and isinstance(
+            y, Tensor
+        ), "Arguments of MSE must be Tensor objects!"
         res = sum([(xi - yi) ** 2 for xi, yi in zip(x, y)])
     else:
-        assert isinstance(x, Value) and isinstance(
-            y, Value
-        ), "Arguments of MSE must be Value objects!"
+        assert isinstance(x, Tensor) and isinstance(
+            y, Tensor
+        ), "Arguments of MSE must be Tensor objects!"
         res = (x - y) ** 2
     return res
 

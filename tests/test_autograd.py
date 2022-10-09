@@ -13,16 +13,16 @@ Tests !
 import unittest
 import random
 
-from alumette import Value
+from alumette import Tensor
 import alumette
 
 
 class TestAutograd(unittest.TestCase):
     def test_int_linear(self):
         a, b, c = (
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
         )
         d = a * b + c
         self.assertEqual(a.grad, 0)
@@ -35,9 +35,9 @@ class TestAutograd(unittest.TestCase):
 
     def test_float_linear(self):
         a, b, c = (
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
         )
         d = a * b + c
         self.assertEqual(a.grad, 0)
@@ -50,9 +50,9 @@ class TestAutograd(unittest.TestCase):
 
     def test_int_linear_2(self):
         a, b, c = (
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
         )
         d = (a + b) * c
         self.assertEqual(a.grad, 0)
@@ -65,9 +65,9 @@ class TestAutograd(unittest.TestCase):
 
     def test_float_linear_2(self):
         a, b, c = (
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
         )
         d = (a + b) * c
         self.assertEqual(a.grad, 0)
@@ -80,10 +80,10 @@ class TestAutograd(unittest.TestCase):
 
     def test_int_chain(self):
         a, b, c, d = (
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
         )
         L = d * (c + (a * b))
         self.assertEqual(a.grad, 0)
@@ -98,10 +98,10 @@ class TestAutograd(unittest.TestCase):
 
     def test_float_chain(self):
         a, b, c, d = (
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
         )
         L = d * (c + (a * b))
         self.assertEqual(a.grad, 0)
@@ -116,10 +116,10 @@ class TestAutograd(unittest.TestCase):
 
     def test_int_squared_chain(self):
         a, b, c, d = (
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
-            Value(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
+            Tensor(random.randint(-100, 100)),
         )
         exp, denom = 3, 8
         L = a * ((b - c) ** 3) + (d / 8)
@@ -131,10 +131,10 @@ class TestAutograd(unittest.TestCase):
 
     def test_float_squared_chain(self):
         a, b, c, d = (
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
         )
         exp, denom = 3, 8
         L = a * ((b - c) ** 3) + (d / 8)
@@ -145,65 +145,65 @@ class TestAutograd(unittest.TestCase):
         self.assertAlmostEqual(d.grad, 1 / denom)
 
     def test_add_self(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         (a+a+a).backward()
         self.assertEqual(a.grad, 3)
 
     def test_r_add(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         b = random.uniform(-100, 100)
         L = b + a
         L.backward()
         self.assertEqual(a.grad, 1)
 
     def test_r_sub(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         b = random.uniform(-100, 100)
         L = b - a
         L.backward()
         self.assertEqual(a.grad, -1)
 
     def test_r_mul(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         b = random.uniform(-100, 100)
         L = b * a
         L.backward()
         self.assertEqual(a.grad, b)
 
     def test_neg_r_mul(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         b = random.uniform(-100, 100)
         L = (-b) * a
         L.backward()
         self.assertEqual(a.grad, -b)
 
     def test_positive_pow(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         b = random.uniform(0, 100)
         (a**b).backward()
         self.assertEqual(a.grad, b * (a.data ** (b - 1)))
 
     def test_negative_pow(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         b = random.uniform(-1000, -1)
         (a**b).backward()
         self.assertEqual(a.grad, b * (a.data ** (b - 1)))
 
     def test_zero_pow(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         b = 0
         (a**b).backward()
         self.assertEqual(a.grad, 0)
 
     def test_div(self):
-        a, b = Value(random.uniform(-10, 10)), Value(random.uniform(-10, 10))
+        a, b = Tensor(random.uniform(-10, 10)), Tensor(random.uniform(-10, 10))
         L = a / b
         L.backward()
         self.assertAlmostEqual(a.grad, 1 / b.data, places=4)
         self.assertAlmostEqual(b.grad, -a.data / (b.data**2), places=4)
 
     def test_large_div(self):
-        a, b = Value(random.uniform(-1000, 1000)), Value(random.uniform(-1000, 1000))
+        a, b = Tensor(random.uniform(-1000, 1000)), Tensor(random.uniform(-1000, 1000))
         L = a / b
         L.backward()
         self.assertAlmostEqual(a.grad, 1 / b.data, places=4)
@@ -211,9 +211,9 @@ class TestAutograd(unittest.TestCase):
 
     def test_r_ops(self):
         a, b, c = (
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-100, 100)),
-            Value(random.uniform(-10, 10)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-100, 100)),
+            Tensor(random.uniform(-10, 10)),
         )
         d, e, f = (
             random.uniform(-100, 100),
@@ -229,28 +229,28 @@ class TestAutograd(unittest.TestCase):
         )
 
     def test_relu_op_backward(self):
-        a = Value(random.uniform(0, 1000))
+        a = Tensor(random.uniform(0, 1000))
         L = alumette.relu.act(a)
         L.backward()
         self.assertEqual(a.grad, 1)
-        a = Value(random.uniform(-10000, 0))
+        a = Tensor(random.uniform(-10000, 0))
         L = alumette.relu.act(a)
         L.backward()
         self.assertEqual(a.grad, 0)
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         L = alumette.relu.act(a)
         L.backward()
         self.assertEqual(a.grad, 1 if a.data > 0 else 0)
 
     def test_MSE(self):
-        a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
         L = (a - b) ** 2
         L.backward()
         self.assertEqual(a.grad, 2 * (a.data - b.data))
         self.assertEqual(b.grad, -2 * (a.data - b.data))
 
     def test_pow_diff(self):
-        a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
         c = random.uniform(-100, 100)
         L = (a - b) ** c
         L.backward()
@@ -258,7 +258,7 @@ class TestAutograd(unittest.TestCase):
         self.assertEqual(b.grad, -c * ((a.data - b.data) ** (c - 1)))
 
     def test_MSE_relu(self):
-        a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
         (alumette.relu.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
@@ -274,12 +274,12 @@ class TestAutograd(unittest.TestCase):
         )
 
     def test_tanh_op_backward(self):
-        a = Value(random.uniform(-100, 100))
+        a = Tensor(random.uniform(-100, 100))
         (alumette.tanh.act(a)).backward()
         self.assertEqual(a.grad, 1 - (alumette.tanh.act(a).data ** 2))
 
     def test_MSE_tanh(self):
-        a, b = Value(random.uniform(-100, 100)), Value(random.uniform(-100, 100))
+        a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
         (alumette.tanh.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
