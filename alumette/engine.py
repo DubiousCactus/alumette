@@ -85,8 +85,7 @@ class Tensor:
     def __pow__(self, other):
         assert type(other) in [
             int,
-            float,
-        ], "__pow__ only handles float or int exponents"
+        ], "__pow__ only handles int exponents"
         return Tensor(
             self.data**other,
             _parents=(self, Tensor(other, requires_grad=False)),
@@ -207,5 +206,5 @@ class PowOp(Op):
         ), "Output node has a 0 gradient while trying to backpropagate to parents!"
         # TODO: Handle pow(value, value)!
         parents[0]._grad += (
-            parents[1].data * (parents[0].data ** (parents[1].data - 1)) * node._grad
+            parents[1].data * (parents[0].data ** (parents[1].data- 1)) * node._grad
         )

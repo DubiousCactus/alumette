@@ -10,6 +10,7 @@
 Tests !
 """
 
+import numpy as np
 import unittest
 import random
 
@@ -139,10 +140,10 @@ class TestAutograd(unittest.TestCase):
         exp, denom = 3, 8
         L = a * ((b - c) ** 3) + (d / 8)
         L.backward()
-        self.assertAlmostEqual(a.grad, (b.data - c.data) ** exp)
-        self.assertAlmostEqual(b.grad, exp * a.data * (b.data - c.data) ** (exp - 1))
-        self.assertAlmostEqual(c.grad, -exp * a.data * (b.data - c.data) ** (exp - 1))
-        self.assertAlmostEqual(d.grad, 1 / denom)
+        self.assertTrue(np.allclose(a.grad, (b.data - c.data) ** exp))
+        self.assertTrue(np.allclose(b.grad, exp * a.data * (b.data - c.data) ** (exp - 1)))
+        self.assertTrue(np.allclose(c.grad, -exp * a.data * (b.data - c.data) ** (exp - 1)))
+        self.assertTrue(np.allclose(d.grad, 1 / denom))
 
     def test_add_self(self):
         a = Tensor(random.uniform(-100, 100))
@@ -179,35 +180,34 @@ class TestAutograd(unittest.TestCase):
 
     def test_positive_pow(self):
         a = Tensor(random.uniform(-100, 100))
-        b = random.uniform(0, 100)
+        b = int(random.uniform(0, 10))
         (a**b).backward()
-        self.assertEqual(a.grad, b * (a.data ** (b - 1)))
+        self.assertTrue(np.allclose(a.grad, b * (a.data ** (b - 1))))
 
     def test_negative_pow(self):
         a = Tensor(random.uniform(-100, 100))
-        b = random.uniform(-1000, -1)
+        b = int(random.uniform(-10, -1))
         (a**b).backward()
-        self.assertEqual(a.grad, b * (a.data ** (b - 1)))
+        self.assertTrue(np.allclose(a.grad, b * (a.data ** (b - 1))))
 
     def test_zero_pow(self):
         a = Tensor(random.uniform(-100, 100))
         b = 0
         (a**b).backward()
         self.assertEqual(a.grad, 0)
-
     def test_div(self):
         a, b = Tensor(random.uniform(-10, 10)), Tensor(random.uniform(-10, 10))
         L = a / b
         L.backward()
-        self.assertAlmostEqual(a.grad, 1 / b.data, places=4)
-        self.assertAlmostEqual(b.grad, -a.data / (b.data**2), places=4)
+        self.assertTrue(np.allclose(a.grad, 1 / b.data))
+        self.assertTrue(np.allclose(b.grad, -a.data / (b.data**2)))
 
     def test_large_div(self):
         a, b = Tensor(random.uniform(-1000, 1000)), Tensor(random.uniform(-1000, 1000))
         L = a / b
         L.backward()
-        self.assertAlmostEqual(a.grad, 1 / b.data, places=4)
-        self.assertAlmostEqual(b.grad, -a.data / (b.data**2), places=4)
+        self.assertTrue(np.allclose(a.grad, 1 / b.data))
+        self.assertTrue(np.allclose(b.grad, -a.data / (b.data**2)))
 
     def test_r_ops(self):
         a, b, c = (
@@ -218,14 +218,14 @@ class TestAutograd(unittest.TestCase):
         d, e, f = (
             random.uniform(-100, 100),
             random.uniform(-100, 100),
-            random.uniform(-10, 10),
+            int(random.uniform(-10, 10)),
         )
         L = (-d * (e - a)) + ((f + b) / (c**f))
         L.backward()
         self.assertEqual(a.grad, d)
         self.assertEqual(b.grad, 1 / (c.data**f))
-        self.assertAlmostEqual(
-            c.grad, -f * (c.data ** (-f - 1)) * (f + b.data), places=4
+        self.assertTrue(np.allclose(
+            c.grad, -f * (c.data ** (-f - 1)) * (f + b.data))
         )
 
     def test_relu_op_backward(self):
@@ -251,7 +251,7 @@ class TestAutograd(unittest.TestCase):
 
     def test_pow_diff(self):
         a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
-        c = random.uniform(-100, 100)
+        c = int(random.uniform(-100, 100))
         L = (a - b) ** c
         L.backward()
         self.assertEqual(a.grad, c * ((a.data - b.data) ** (c - 1)))
@@ -293,6 +293,5 @@ class TestAutograd(unittest.TestCase):
             * alumette.tanh.act(a - b).data
             * (1 - (alumette.tanh.act(a - b).data ** 2)),
         )
-
 if __name__ == "__main__":
     unittest.main()
