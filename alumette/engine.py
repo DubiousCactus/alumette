@@ -24,7 +24,8 @@ Learning notes:
   chain rule and derivation rules!
 """
 
-DEFAULT_DTYPE=np.float32
+DEFAULT_DTYPE = np.float32
+
 
 class Op(abc.ABC):
     @staticmethod
@@ -44,10 +45,13 @@ def make_tensor_data(x: Any) -> np.ndarray:
         return x.astype(DEFAULT_DTYPE)
     elif isinstance(x, list):
         return np.array(x, dtype=DEFAULT_DTYPE)
-    elif isinstance(x, float) or isinstance(x, int):
+    elif isinstance(x, float) or isinstance(x, int) or type(x) is np.float32:
         return np.array([x], dtype=DEFAULT_DTYPE)
     else:
-        raise TypeError(f"Tensor class only accepts np.ndarray and compatible data, not {type(x)}")
+        raise TypeError(
+            f"Tensor class only accepts np.ndarray and compatible data, not {type(x)}"
+        )
+
 
 class Tensor:
     def __init__(
@@ -59,12 +63,12 @@ class Tensor:
     ):
         self.data = make_tensor_data(data)
         self._parents = _parents
-        self._grad = 0
+        self.grad = np.array([0.0])
         self._grad_fn = _grad_fn
         self.requires_grad = requires_grad
 
     def __repr__(self) -> str:
-        return f"Tensor(data={self.data}, grad={self._grad}, _grad_fn={self._grad_fn})"
+        return f"Tensor(data={self.data}, grad={self.grad}, _grad_fn={self._grad_fn})"
 
     def __add__(self, other):
         other = (
@@ -75,11 +79,22 @@ class Tensor:
         )
 
     def __mul__(self, other):
+        """
+        Hadamard product: A*B
+        """
         other = (
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
         return Tensor(
             self.data * other.data, _parents=(self, other), _grad_fn=MulOp.backward
+        )
+
+    def __matmul__(self, other):  # self @ other
+        other = (
+            other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
+        )
+        return Tensor(
+            self.data @ other.data, _parents=(self, other), _grad_fn=MatMulOp.backward
         )
 
     def __pow__(self, other):
@@ -118,18 +133,18 @@ class Tensor:
     def __rmul__(self, other):
         return self * other
 
-    def __rtruediv__(self, other): #other/self
-        return self ** -1 * other
+    def __rtruediv__(self, other):  # other/self
+        return self**-1 * other
 
-#     def __eq__(self, __o: object) -> bool:
-        # if type(__o) == float:
-            # return self.data == __o
-        # elif isinstance(__o, Value):
-            # return self.data == __o.data
-        # else:
-            # raise NotImplementedError(
-                # f"Comparing Value with type {type(__o)} is not implemented"
-            # )
+    #     def __eq__(self, __o: object) -> bool:
+    # if type(__o) == float:
+    # return self.data == __o
+    # elif isinstance(__o, Value):
+    # return self.data == __o.data
+    # else:
+    # raise NotImplementedError(
+    # f"Comparing Value with type {type(__o)} is not implemented"
+    # )
 
     # def __hash__(self) -> int:
     #         return hash(self.data) + sum([hash(o) for o in self.parents])
@@ -146,7 +161,8 @@ class Tensor:
                         build_topology(p)
                 topology.append(node)
 
-        self._grad = 1.0
+        assert self.data.shape == (1,), "grad can be implicitly created only for scalar outputs"
+        self.grad = np.ones((1,))
         build_topology(self)
         for node in reversed(topology):
             node._grad_fn(node)
@@ -154,10 +170,6 @@ class Tensor:
     @property
     def parents(self) -> Tuple:
         return self._parents
-
-    @property
-    def grad(self):
-        return self._grad
 
     @property
     def shape(self) -> Tuple:
@@ -176,8 +188,8 @@ class AddOp(Op):
     @staticmethod
     def backward(node: Tensor) -> None:
         parents = node.parents
-        parents[0]._grad += node._grad
-        parents[1]._grad += node._grad
+        parents[0].grad += node.grad
+        parents[1].grad += node.grad
 
 
 class MulOp(Op):
@@ -185,10 +197,35 @@ class MulOp(Op):
     def backward(node: Tensor) -> None:
         parents = node.parents
         # assert (
-        # node._grad != 0
+        # node.grad != 0
         # ), "Output node has a 0 gradient while trying to backpropagate to parents!"
-        parents[0]._grad += node._grad * parents[1].data
-        parents[1]._grad += node._grad * parents[0].data
+        parents[0].grad += node.grad * parents[1].data
+        parents[1].grad += node.grad * parents[0].data
+
+
+class MatMulOp(Op):
+    @staticmethod
+    def backward(node: Tensor) -> None:
+        # TODO: Write unit test
+        parents = node.parents
+        # assert (
+        # node.grad != 0
+        # ), "Output node has a 0 gradient while trying to backpropagate to parents!"
+        # TODO: Why doesn't += work?? (because of broadcasting issues)
+        if len(parents[0].shape) > 1 and len(parents[1].shape) == 1:
+            # Matrix-vector product: Ab
+            parents[0].grad = parents[0].grad + node.grad * (np.ones_like(parents[0].data) *
+                                                             parents[1].data).T
+            parents[1].grad = parents[1].grad + node.grad @ parents[0].data
+        elif len(parents[0].shape) == 1 and len(parents[1].shape) > 1:
+            # Matrix-vector product: Ba
+            parents[1].grad = parents[1].grad + node.grad * (np.ones_like(parents[1].data) *
+                                                             parents[0].data).T
+            parents[0].grad = parents[0].grad + node.grad @ parents[1].data
+        else:
+            # Matrix-matrix product of vector-vector product: the easy way out
+            parents[0].grad = parents[0].grad + node.grad * parents[1].data.T
+            parents[1].grad = parents[1].grad + node.grad * parents[0].data.T
 
 
 class NegOp(Op):
@@ -196,7 +233,7 @@ class NegOp(Op):
     def backward(node: Tensor) -> None:
         parents = node.parents
         assert len(parents) == 1, "NegOp has more than one parent!"
-        parents[0]._grad += -node._grad
+        parents[0].grad += -node.grad
 
 
 class PowOp(Op):
@@ -204,9 +241,9 @@ class PowOp(Op):
     def backward(node: Tensor) -> None:
         parents = node.parents
         assert (
-            node._grad != 0
+            node.grad != 0
         ), "Output node has a 0 gradient while trying to backpropagate to parents!"
         # TODO: Handle pow(value, value)!
-        parents[0]._grad += (
-            parents[1].data * (parents[0].data ** (parents[1].data- 1)) * node._grad
+        parents[0].grad += (
+            parents[1].data * (parents[0].data ** (parents[1].data - 1)) * node.grad
         )

@@ -33,7 +33,7 @@ class LogOp(Op):
         parents = node.parents
         assert len(parents) == 1, "LogOp has more than one parent!"
         # TODO: Write unit test
-        parents[0]._grad += 1/node.data * node.grad
+        parents[0].grad += 1/node.data * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
@@ -46,7 +46,7 @@ class ExpOp(Op):
         # TODO: Write unit test
         parents = node.parents
         assert len(parents) == 1, "ExpOp has more than one parent!"
-        parents[0]._grad += math.exp(node.data) * node.grad
+        parents[0].grad += math.exp(node.data) * node.grad
 
 
     @staticmethod
@@ -60,7 +60,7 @@ class SoftPlusOp(Op):
         # TODO: Write unit test
         parents = node.parents
         assert len(parents) == 1, "SoftPLusOp has more than one parent!"
-        parents[0]._grad += 1/(1+math.exp(-node.data)) * node.grad
+        parents[0].grad += 1/(1+math.exp(-node.data)) * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
@@ -92,7 +92,7 @@ class ReLUOp(Op):
         parents = node.parents
         assert len(parents) == 1, "ReLUOp has more than one parent!"
         assert node.data >= 0, "ReLU's output node has negative value"
-        parents[0]._grad += (1 if node.data > 0 else 0) * node._grad
+        parents[0].grad += (1 if node.data > 0 else 0) * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
@@ -104,7 +104,7 @@ class TanhOp(Op):
     def backward(node: Tensor) -> None:
         parents = node.parents
         assert len(parents) == 1, "TanhOp has more than one parent!"
-        parents[0]._grad += (1 - node.data**2) * node._grad
+        parents[0].grad += (1 - node.data**2) * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
