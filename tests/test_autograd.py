@@ -235,15 +235,15 @@ class ScalarManualTests(unittest.TestCase):
 
     def test_relu_op_backward(self):
         a = Tensor(random.uniform(0, 1000))
-        L = alumette.relu.act(a)
+        L = alumette.relu(a)
         L.backward()
         self.assertEqual(a.grad, 1)
         a = Tensor(random.uniform(-10000, 0))
-        L = alumette.relu.act(a)
+        L = alumette.relu(a)
         L.backward()
         self.assertEqual(a.grad, 0)
         a = Tensor(random.uniform(-100, 100))
-        L = alumette.relu.act(a)
+        L = alumette.relu(a)
         L.backward()
         self.assertEqual(a.grad, 1 if a.data > 0 else 0)
 
@@ -264,35 +264,35 @@ class ScalarManualTests(unittest.TestCase):
 
     def test_MSE_relu(self):
         a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
-        (alumette.relu.act((a - b)) ** 2).backward()
+        (alumette.relu((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
-            2 * alumette.relu.act(a - b).data * (1 if (a.data - b.data) > 0 else 0),
+            2 * alumette.relu(a - b).data * (1 if (a.data - b.data) > 0 else 0),
         )
         self.assertEqual(
             b.grad,
-            -2 * alumette.relu.act(a - b).data * (1 if (a.data - b.data) > 0 else 0),
+            -2 * alumette.relu(a - b).data * (1 if (a.data - b.data) > 0 else 0),
         )
 
     def test_tanh_op_backward(self):
         a = Tensor(random.uniform(-100, 100))
-        (alumette.tanh.act(a)).backward()
-        self.assertEqual(a.grad, 1 - (alumette.tanh.act(a).data ** 2))
+        (alumette.tanh(a)).backward()
+        self.assertEqual(a.grad, 1 - (alumette.tanh(a).data ** 2))
 
     def test_MSE_tanh(self):
         a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
-        (alumette.tanh.act((a - b)) ** 2).backward()
+        (alumette.tanh((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
             2
-            * alumette.tanh.act(a - b).data
-            * (1 - (alumette.tanh.act(a - b).data ** 2)),
+            * alumette.tanh(a - b).data
+            * (1 - (alumette.tanh(a - b).data ** 2)),
         )
         self.assertEqual(
             b.grad,
             -2
-            * alumette.tanh.act(a - b).data
-            * (1 - (alumette.tanh.act(a - b).data ** 2)),
+            * alumette.tanh(a - b).data
+            * (1 - (alumette.tanh(a - b).data ** 2)),
         )
 
 
@@ -300,6 +300,7 @@ class MatrixGradcheckTests(unittest.TestCase):
     """
     More complex tests suite using grad_check.
     """
+
     def test_vector_matmul(self):
         dim = random.randint(1, 20)
         a = Tensor(np.random.random((dim)))
@@ -352,10 +353,25 @@ class MatrixGradcheckTests(unittest.TestCase):
         w = Tensor(np.random.random(mat_dim))
         x = Tensor(np.random.random((vec_dim)))
         b = Tensor(np.random.random((vec_dim)))
-        exp = lambda w, x, b: (w @ x) + b
-        exp(w, x, b).backward()
-        self.assertTrue(grad_check([w, x, b], exp, 0, np.array(w.grad)))
-        self.assertTrue(grad_check([w, x, b], exp, 2, np.array(b.grad)))
+        c = Tensor(np.random.random((mat_dim[1])))
+        exp = lambda w, x, b, c: (w.T @ x + b) @ c
+        exp(w, x, b, c).backward()
+        self.assertTrue(grad_check([w, x, b, c], exp, 0, np.array(w.grad)))
+        self.assertTrue(grad_check([w, x, b, c], exp, 2, np.array(b.grad)))
+        self.assertTrue(grad_check([w, x, b, c], exp, 3, np.array(c.grad)))
+
+    def test_linear_layer_relu(self):
+        vec_dim = random.randint(2, 20)
+        mat_dim = vec_dim, random.randint(2, 20)
+        w = Tensor(np.random.random(mat_dim))
+        x = Tensor(np.random.random((vec_dim)))
+        b = Tensor(np.random.random((mat_dim[1])))
+        c = Tensor(np.random.random((mat_dim[1])))
+        exp = lambda w, x, b, c: alumette.relu((w.T @ x + b) @ c)
+        exp(w, x, b,c).backward()
+        self.assertTrue(grad_check([w, x, b, c], exp, 0, np.array(w.grad)))
+        self.assertTrue(grad_check([w, x, b, c], exp, 2, np.array(b.grad)))
+        self.assertTrue(grad_check([w, x, b, c], exp, 3, np.array(c.grad)))
 
 
 if __name__ == "__main__":
