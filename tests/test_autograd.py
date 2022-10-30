@@ -352,7 +352,7 @@ class MatrixGradcheckTests(unittest.TestCase):
         mat_dim = vec_dim, random.randint(1, 20)
         w = Tensor(np.random.random(mat_dim))
         x = Tensor(np.random.random((vec_dim)))
-        b = Tensor(np.random.random((vec_dim)))
+        b = Tensor(np.random.random((mat_dim[1])))
         c = Tensor(np.random.random((mat_dim[1])))
         exp = lambda w, x, b, c: (w.T @ x + b) @ c
         exp(w, x, b, c).backward()
