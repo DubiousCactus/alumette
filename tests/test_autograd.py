@@ -13,7 +13,6 @@ Tests !
 import numpy as np
 import unittest
 import random
-import torch
 
 from alumette import Tensor, grad_check
 import alumette
@@ -348,8 +347,8 @@ class MatrixGradcheckTests(unittest.TestCase):
         self.assertTrue(grad_check([a, b, c], exp, 2, np.array(c.grad)))
 
     def test_linear_layer(self):
-        vec_dim = random.randint(1, 20)
-        mat_dim = vec_dim, random.randint(1, 20)
+        vec_dim = random.randint(2, 20)
+        mat_dim = vec_dim, random.randint(2, 20)
         w = Tensor(np.random.random(mat_dim))
         x = Tensor(np.random.random((vec_dim)))
         b = Tensor(np.random.random((mat_dim[1])))
@@ -367,11 +366,13 @@ class MatrixGradcheckTests(unittest.TestCase):
         x = Tensor(np.random.random((vec_dim)))
         b = Tensor(np.random.random((mat_dim[1])))
         c = Tensor(np.random.random((mat_dim[1])))
-        exp = lambda w, x, b, c: alumette.relu((w.T @ x + b) @ c)
-        exp(w, x, b,c).backward()
-        self.assertTrue(grad_check([w, x, b, c], exp, 0, np.array(w.grad)))
-        self.assertTrue(grad_check([w, x, b, c], exp, 2, np.array(b.grad)))
-        self.assertTrue(grad_check([w, x, b, c], exp, 3, np.array(c.grad)))
+        exp = lambda w, x, b, c: (w.T @ x + b) @ c
+        def relu_layer(w, x, b, c):
+            res = Tensor(exp(w,x,b,c))
+            return alumette.relu(res)
+        self.assertTrue(grad_check([w, x, b, c], relu_layer, 0, np.array(w.grad)))
+        self.assertTrue(grad_check([w, x, b, c], relu_layer, 2, np.array(b.grad)))
+        self.assertTrue(grad_check([w, x, b, c], relu_layer, 3, np.array(c.grad)))
 
 
 if __name__ == "__main__":
