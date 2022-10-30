@@ -37,7 +37,8 @@ class Op(abc.ABC):
 class NoOp(Op):
     @staticmethod
     def backward(node: Any) -> None:
-        pass
+        for p in node.parents:
+            p.grad = p.grad + node.grad
 
 
 def make_tensor_data(x: Any) -> np.ndarray:
@@ -161,7 +162,7 @@ class Tensor:
                         build_topology(p)
                 topology.append(node)
 
-        assert self.data.shape == (1,), "grad can be implicitly created only for scalar outputs"
+        assert self.data.squeeze().shape == (), "grad can be implicitly created only for scalar outputs"
         self.grad = np.ones((1,))
         build_topology(self)
         for node in reversed(topology):
@@ -182,6 +183,13 @@ class Tensor:
     def item(self) -> float:
         assert len(self.data.shape) == 1
         return self.data[0]
+
+    @property
+    def T(self):
+        return Tensor(self.data.T, _parents=(self,))
+
+    def numpy(self):
+        return self.data
 
 
 class AddOp(Op):
@@ -211,7 +219,6 @@ class MatMulOp(Op):
         # assert (
         # node.grad != 0
         # ), "Output node has a 0 gradient while trying to backpropagate to parents!"
-        # TODO: Why doesn't += work?? (because of broadcasting issues)
         if len(parents[0].shape) > 1 and len(parents[1].shape) == 1:
             # Matrix-vector product: Ab
             parents[0].grad = parents[0].grad + node.grad * (np.ones_like(parents[0].data) *
@@ -222,11 +229,21 @@ class MatMulOp(Op):
             parents[1].grad = parents[1].grad + node.grad * (np.ones_like(parents[1].data) *
                                                              parents[0].data).T
             parents[0].grad = parents[0].grad + node.grad @ parents[1].data
-        else:
-            # Matrix-matrix product of vector-vector product: the easy way out
+        elif parents[0].shape == parents[1].shape:
+            # Matrix-matrix product or vector-vector product: the easy way out
             parents[0].grad = parents[0].grad + node.grad * parents[1].data.T
             parents[1].grad = parents[1].grad + node.grad * parents[0].data.T
-
+        else:
+            # Work out the dimensions.
+            # TODO: Find a more efficient way to do this!
+            if node.grad.shape[-1] == parents[1].data.shape[0]:
+                parents[0].grad = parents[0].grad + node.grad @ parents[1].data
+            else:
+                parents[0].grad = parents[0].grad + node.grad @ parents[1].data.T
+            if node.grad.shape[-1] == parents[0].data.shape[0]:
+                parents[1].grad = parents[1].grad + node.grad @ parents[0].data
+            else:
+                parents[1].grad = parents[1].grad + node.grad @ parents[0].data.T
 
 class NegOp(Op):
     @staticmethod
