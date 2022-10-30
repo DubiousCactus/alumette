@@ -11,6 +11,7 @@ Autograd engine
 """
 
 import numpy as np
+import sys
 import abc
 
 from typing import Any, List, Tuple
@@ -25,6 +26,7 @@ Learning notes:
 """
 
 DEFAULT_DTYPE = np.float32
+sys.setrecursionlimit(1500)# TODO: Memoization
 
 
 class Op(abc.ABC):

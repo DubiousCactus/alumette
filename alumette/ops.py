@@ -12,10 +12,9 @@ Diverse ops
 from functools import reduce
 from typing import List, Any
 
-from numpy import require
-
 from .engine import Tensor
 
+import numpy as np
 import math
 import abc
 
@@ -96,7 +95,7 @@ class ReLUOp(Op):
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
-        return Tensor(max(0, node.data), _parents=(node,), _grad_fn=ReLUOp.backward)
+        return Tensor(np.maximum(0, node.data), _parents=(node,), _grad_fn=ReLUOp.backward)
 
 
 class TanhOp(Op):
@@ -109,8 +108,8 @@ class TanhOp(Op):
     @staticmethod
     def act(node: Tensor) -> Tensor:
         n = node.data
-        t = (math.exp(max(min(2 * n, 709), -708)) - 1) / (
-            math.exp(max(min(2 * n, 709), -708)) + 1
+        t = (np.exp(np.clip(2 * n, 709, -708)) - 1) / (
+            np.exp(np.clip(2 * n, 709, -708)) + 1
         )
         return Tensor(t, _parents=(node,), _grad_fn=TanhOp.backward)
 

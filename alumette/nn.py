@@ -16,6 +16,7 @@ from typing import Any, List, Tuple, Union
 from .engine import Tensor
 import alumette
 
+import numpy as np
 import random
 import abc
 
@@ -23,64 +24,32 @@ import abc
 class Module:
     def zero_grad(self):
         for p in self.parameters():
-            p._grad = 0
-            p._visited = False
+            p.grad = np.array([0])
 
     def parameters(self) -> List[Tensor]:
         return []
 
-
-class Neuron(Module):
-    def __init__(self, input_dim: int, bias=True, activation="identity") -> None:
-        self._synapses = [Tensor(random.uniform(-1, 1)) for _ in range(input_dim)]
-        self._bias = Tensor(random.uniform(-1, 1)) if bias else None
+class Linear(Module):
+    def __init__(self, input_dim: int, output_dim: int, activation="relu", use_bias=True) -> None:
+        self.weights = Tensor(np.random.random((input_dim, output_dim)), requires_grad=True)
+        self.bias = Tensor(np.random.random((input_dim)), requires_grad=True) if use_bias else None
         self._activation = activation
 
-    def __call__(self, inputs: Union[Tensor, List]) -> Any:
-        output = Tensor(0)
-        if isinstance(inputs, Tensor):
-            inputs = [inputs]
-        assert isinstance(inputs, list) or isinstance(
-            inputs, Tensor
-        ) or isinstance(inputs, tuple), "Neuron inputs should be a Tensor or a list!"
-        assert len(inputs) == len(
-            self._synapses
-        ), "Dim of inputs doesn't match dim of synapses!"
-        for i, x in enumerate(inputs):
-            output += self._synapses[i] * x
-        if self._bias is not None:
-            output += self._bias
+    def __call__(self, x: Tensor) -> Any:
+        output = self.weights.T @ x
+        if self.bias is not None:
+            output = output + self.bias
         if self._activation == "relu":
             # TODO: Gradient for this? (done?)
-            output = alumette.relu.act(output)
+            output = alumette.relu(output)
         elif self._activation == "tanh":
-            output = alumette.tanh.act(output)
+            output = alumette.tanh(output)
         elif self._activation == "identity":
             pass
-        else:
-            raise NotImplementedError(
-                f"Activation {self._activation} is not implemented"
-            )
         return output
 
     def parameters(self) -> List[Tensor]:
-        return self._synapses + ([self._bias] if self._bias is not None else [])
-
-
-class Layer(Module):
-    def __init__(self, input_dim: int, output_dim: int, activation="relu") -> None:
-        self.neurons = [
-            Neuron(input_dim, activation=activation) for _ in range(output_dim)
-        ]
-
-    def __call__(self, inputs: List[Neuron]) -> Any:
-        outputs = []
-        for n in self.neurons:
-            outputs.append(n(inputs))
-        return outputs
-
-    def parameters(self) -> List[Tensor]:
-        return [param for n in self.neurons for param in n.parameters()]
+        return [self.weights] + ([self.bias] if self.bias is not None else [])
 
 
 class NeuralNet(abc.ABC, Module):
@@ -93,7 +62,7 @@ class NeuralNet(abc.ABC, Module):
 
     def parameters(self) -> List[Tensor]:
         def find_params(obj: object) -> List[Tensor]:
-            if isinstance(obj, Layer):
+            if isinstance(obj, Linear):
                 return obj.parameters()
             params = []
             for _, attr in obj.__dict__.items():
@@ -116,11 +85,11 @@ class MLP(NeuralNet):
         activation="relu",
         output_activation="identity",
     ) -> None:
-        self.layers = [Layer(input_dim, layer_width, activation=activation)]
+        self.layers = [Linear(input_dim, layer_width, activation=activation)]
         for _ in range(n_layers - 2):
-            self.layers += [Layer(layer_width, layer_width, activation=activation)]
+            self.layers += [Linear(layer_width, layer_width, activation=activation)]
         self.layers += [
-            Layer(layer_width, output_dim, activation=output_activation),
+            Linear(layer_width, output_dim, activation=output_activation),
         ]
 
     def forward(self, x):
@@ -160,5 +129,4 @@ class SGD:
 
     def zero_grad(self):
         for p in self._params:
-            p._grad = 0
-            p._visited = False
+            p.grad = 0
