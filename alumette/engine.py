@@ -46,13 +46,23 @@ def make_tensor_data(x: Any) -> np.ndarray:
         return x.astype(DEFAULT_DTYPE)
     elif isinstance(x, list):
         return np.array(x, dtype=DEFAULT_DTYPE)
-    elif isinstance(x, float) or isinstance(x, int) or type(x) is np.float32:
+    elif (
+        isinstance(x, float)
+        or isinstance(x, int)
+        or type(x) in [np.float32, np.float16, np.float64, np.float128]
+    ):
         return np.array([x], dtype=DEFAULT_DTYPE)
     else:
         raise TypeError(
             f"Tensor class only accepts np.ndarray and compatible data, not {type(x)}"
         )
 
+def set_default_dtype(dtype):
+    """
+    Used for unit tests.
+    """
+    global DEFAULT_DTYPE
+    DEFAULT_DTYPE = dtype
 
 class Tensor:
     def __init__(
@@ -162,7 +172,9 @@ class Tensor:
                         build_topology(p)
                 topology.append(node)
 
-        assert self.data.squeeze().shape == (), "grad can be implicitly created only for scalar outputs"
+        assert (
+            self.data.squeeze().shape == ()
+        ), "grad can be implicitly created only for scalar outputs"
         self.grad = np.ones((1,))
         build_topology(self)
         for node in reversed(topology):
@@ -221,13 +233,17 @@ class MatMulOp(Op):
         # ), "Output node has a 0 gradient while trying to backpropagate to parents!"
         if len(parents[0].shape) > 1 and len(parents[1].shape) == 1:
             # Matrix-vector product: Ab
-            parents[0].grad = parents[0].grad + node.grad * (np.ones_like(parents[0].data) *
-                                                             parents[1].data).T
+            parents[0].grad = (
+                parents[0].grad
+                + node.grad * (np.ones_like(parents[0].data) * parents[1].data).T
+            )
             parents[1].grad = parents[1].grad + node.grad @ parents[0].data
         elif len(parents[0].shape) == 1 and len(parents[1].shape) > 1:
             # Matrix-vector product: Ba
-            parents[1].grad = parents[1].grad + node.grad * (np.ones_like(parents[1].data) *
-                                                             parents[0].data).T
+            parents[1].grad = (
+                parents[1].grad
+                + node.grad * (np.ones_like(parents[1].data) * parents[0].data).T
+            )
             parents[0].grad = parents[0].grad + node.grad @ parents[1].data
         elif parents[0].shape == parents[1].shape:
             # Matrix-matrix product or vector-vector product: the easy way out
@@ -244,6 +260,7 @@ class MatMulOp(Op):
                 parents[1].grad = parents[1].grad + node.grad @ parents[0].data
             else:
                 parents[1].grad = parents[1].grad + node.grad @ parents[0].data.T
+
 
 class NegOp(Op):
     @staticmethod

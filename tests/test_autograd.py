@@ -19,8 +19,8 @@ from alumette import Tensor, grad_check
 import alumette
 
 
-# TODO: Reorganize tests into categories
-class TestAutograd(unittest.TestCase):
+# TODO: Reorganize tests into categories?
+class ScalarManualTests(unittest.TestCase):
     def test_int_linear(self):
         a, b, c = (
             Tensor(random.randint(-100, 100)),
@@ -143,13 +143,17 @@ class TestAutograd(unittest.TestCase):
         L = a * ((b - c) ** 3) + (d / 8)
         L.backward()
         self.assertTrue(np.allclose(a.grad, (b.data - c.data) ** exp))
-        self.assertTrue(np.allclose(b.grad, exp * a.data * (b.data - c.data) ** (exp - 1)))
-        self.assertTrue(np.allclose(c.grad, -exp * a.data * (b.data - c.data) ** (exp - 1)))
+        self.assertTrue(
+            np.allclose(b.grad, exp * a.data * (b.data - c.data) ** (exp - 1))
+        )
+        self.assertTrue(
+            np.allclose(c.grad, -exp * a.data * (b.data - c.data) ** (exp - 1))
+        )
         self.assertTrue(np.allclose(d.grad, 1 / denom))
 
     def test_add_self(self):
         a = Tensor(random.uniform(-100, 100))
-        (a+a+a).backward()
+        (a + a + a).backward()
         self.assertEqual(a.grad, 3)
 
     def test_r_add(self):
@@ -197,6 +201,7 @@ class TestAutograd(unittest.TestCase):
         b = 0
         (a**b).backward()
         self.assertEqual(a.grad, 0)
+
     def test_div(self):
         a, b = Tensor(random.uniform(-10, 10)), Tensor(random.uniform(-10, 10))
         L = a / b
@@ -226,9 +231,7 @@ class TestAutograd(unittest.TestCase):
         L.backward()
         self.assertTrue(np.allclose(a.grad, d))
         self.assertEqual(b.grad, 1 / (c.data**f))
-        self.assertTrue(np.allclose(
-            c.grad, -f * (c.data ** (-f - 1)) * (f + b.data))
-        )
+        self.assertTrue(np.allclose(c.grad, -f * (c.data ** (-f - 1)) * (f + b.data)))
 
     def test_relu_op_backward(self):
         a = Tensor(random.uniform(0, 1000))
@@ -264,15 +267,11 @@ class TestAutograd(unittest.TestCase):
         (alumette.relu.act((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
-            2
-            * alumette.relu.act(a - b).data
-            * (1 if (a.data - b.data) > 0 else 0),
+            2 * alumette.relu.act(a - b).data * (1 if (a.data - b.data) > 0 else 0),
         )
         self.assertEqual(
             b.grad,
-            -2
-            * alumette.relu.act(a - b).data
-            * (1 if (a.data - b.data) > 0 else 0),
+            -2 * alumette.relu.act(a - b).data * (1 if (a.data - b.data) > 0 else 0),
         )
 
     def test_tanh_op_backward(self):
@@ -296,14 +295,19 @@ class TestAutograd(unittest.TestCase):
             * (1 - (alumette.tanh.act(a - b).data ** 2)),
         )
 
+
+class MatrixGradcheckTests(unittest.TestCase):
+    """
+    More complex tests suite using grad_check.
+    """
     def test_vector_matmul(self):
         dim = random.randint(1, 20)
         a = Tensor(np.random.random((dim)))
         b = Tensor(np.random.random((dim)))
-        (a@b).backward()
-        exp = lambda a, b: a@b
-        self.assertTrue(grad_check([a,b], exp, 0, a.grad))
-        self.assertTrue(grad_check([a,b], exp, 1, b.grad))
+        (a @ b).backward()
+        exp = lambda a, b: a @ b
+        self.assertTrue(grad_check([a, b], exp, 0, a.grad))
+        self.assertTrue(grad_check([a, b], exp, 1, b.grad))
 
     def test_matrix_vector_matmul(self):
         vec_dim = random.randint(1, 20)
@@ -311,11 +315,48 @@ class TestAutograd(unittest.TestCase):
         a = Tensor(np.random.random(mat_dim))
         b = Tensor(np.random.random(mat_dim))
         c = Tensor(np.random.random((vec_dim)))
-        (((a@b.T)@c)@c).backward()
-        exp = lambda a,b, c: ((a@b.T)@c)@c
-        self.assertTrue(grad_check([a,b, c], exp, 0, a.grad))
-        self.assertTrue(grad_check([a,b, c], exp, 1, b.grad))
-        self.assertTrue(grad_check([a,b, c], exp, 2, c.grad))
-        
+        (((a @ b.T) @ c) @ c).backward()
+        exp = lambda a, b, c: ((a @ b.T) @ c) @ c
+        self.assertTrue(grad_check([a, b, c], exp, 0, a.grad))
+        self.assertTrue(grad_check([a, b, c], exp, 1, b.grad))
+        self.assertTrue(grad_check([a, b, c], exp, 2, c.grad))
+
+    def test_matrix_vector_mul(self):
+        vec_dim = random.randint(1, 20)
+        mat_dim = vec_dim, random.randint(1, 20)
+        a = Tensor(np.random.random(mat_dim))
+        b = Tensor(np.random.random(mat_dim))
+        c = Tensor(np.random.random((vec_dim)))
+        d = Tensor(np.random.random((mat_dim[1])))
+        exp = lambda a, b, c, d: ((a * b).T @ c) @ d
+        exp(a, b, c, d).backward()
+        self.assertTrue(grad_check([a, b, c, d], exp, 0, np.array(a.grad)))
+        self.assertTrue(grad_check([a, b, c, d], exp, 1, np.array(b.grad)))
+        self.assertTrue(grad_check([a, b, c, d], exp, 2, np.array(c.grad)))
+        self.assertTrue(grad_check([a, b, c, d], exp, 3, np.array(d.grad)))
+
+    def test_vector_mul(self):
+        dim = random.randint(1, 20)
+        a = Tensor(np.random.random((dim)))
+        b = Tensor(np.random.random((dim)))
+        c = Tensor(np.random.random((dim)))
+        exp = lambda a, b, c: (a * b) @ c
+        exp(a, b, c).backward()
+        self.assertTrue(grad_check([a, b, c], exp, 0, np.array(a.grad)))
+        self.assertTrue(grad_check([a, b, c], exp, 1, np.array(b.grad)))
+        self.assertTrue(grad_check([a, b, c], exp, 2, np.array(c.grad)))
+
+    def test_linear_layer(self):
+        vec_dim = random.randint(1, 20)
+        mat_dim = vec_dim, random.randint(1, 20)
+        w = Tensor(np.random.random(mat_dim))
+        x = Tensor(np.random.random((vec_dim)))
+        b = Tensor(np.random.random((vec_dim)))
+        exp = lambda w, x, b: (w @ x) + b
+        exp(w, x, b).backward()
+        self.assertTrue(grad_check([w, x, b], exp, 0, np.array(w.grad)))
+        self.assertTrue(grad_check([w, x, b], exp, 2, np.array(b.grad)))
+
+
 if __name__ == "__main__":
     unittest.main()

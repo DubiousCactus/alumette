@@ -113,3 +113,10 @@ class TanhOp(Op):
             math.exp(max(min(2 * n, 709), -708)) + 1
         )
         return Tensor(t, _parents=(node,), _grad_fn=TanhOp.backward)
+
+
+softplus = SoftPlusOp.act
+relu = ReLUOp.act
+tanh = TanhOp.act
+exp = ExpOp.act
+log = LogOp.act
