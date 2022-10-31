@@ -32,7 +32,7 @@ class Module:
 class Linear(Module):
     def __init__(self, input_dim: int, output_dim: int, activation="relu", use_bias=True) -> None:
         self.weights = Tensor(np.random.random((input_dim, output_dim)), requires_grad=True)
-        self.bias = Tensor(np.random.random((input_dim)), requires_grad=True) if use_bias else None
+        self.bias = Tensor(np.random.random((output_dim)), requires_grad=True) if use_bias else None
         self._activation = activation
 
     def __call__(self, x: Tensor) -> Any:
@@ -100,7 +100,7 @@ class MLP(NeuralNet):
         return y
 
 
-def MSE(x: Union[List[Tensor], Tensor], y: Union[List[Tensor], Tensor]):
+def MSE(x: Union[List[Tensor], Tensor], y: Union[List[Tensor], Tensor], reduce='mean'):
     if isinstance(x, list) or isinstance(y, list):
         assert type(x) is type(
             y
@@ -114,6 +114,12 @@ def MSE(x: Union[List[Tensor], Tensor], y: Union[List[Tensor], Tensor]):
             y, Tensor
         ), "Arguments of MSE must be Tensor objects!"
         res = (x - y) ** 2
+    if reduce == 'mean':
+        pass
+        # res = alumette.mean(res)
+        # print(res)
+    else:
+        raise NotImplementedError
     return res
 
 
@@ -125,8 +131,8 @@ class SGD:
     def step(self):
         for p in self._params:
             assert p.grad is not None
-            p.data -= self._lr * p.grad
+            p.data = p.data - (self._lr * p.grad)
 
     def zero_grad(self):
         for p in self._params:
-            p.grad = 0
+            p.grad = np.array([0])

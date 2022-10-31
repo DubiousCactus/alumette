@@ -5,6 +5,7 @@
 #
 # Distributed under terms of the MIT license.
 
+import numpy as np
 import unittest
 import torch
 
@@ -16,8 +17,8 @@ class TestTopology(unittest.TestCase):
 
         x = Tensor(-4.0)
         z = 2 * x + 2 + x
-        q = relu.act(z) + z * x
-        h = relu.act(z * z)
+        q = relu(z) + z * x
+        h = relu(z * z)
         y = h + q + q * x
         y.backward()
         xmg, ymg = x, y
@@ -43,8 +44,8 @@ class TestTopology(unittest.TestCase):
         d = a * b + b**3
         c += c + 1
         c += 1 + c + (-a)
-        d += d * 2 + relu.act(b + a)
-        d += 3 * d + relu.act(b - a)
+        d += d * 2 + relu(b + a)
+        d += 3 * d + relu(b - a)
         e = c - d
         f = e**2
         g = f / 2.0
@@ -70,9 +71,9 @@ class TestTopology(unittest.TestCase):
         apt, bpt, gpt = a, b, g
 
         tol = 1e-6
-        self.assertAlmostEqual(gmg.data, gpt.data.item())
-        self.assertAlmostEqual(amg.data, apt.data.item())
-        self.assertAlmostEqual(bmg.grad, bpt.grad.item())
+        self.assertTrue(np.allclose(gmg.data, gpt.data.item(), rtol=tol))
+        self.assertTrue(np.allclose(amg.data, apt.data.item(), rtol=tol))
+        self.assertTrue(np.allclose(bmg.grad, bpt.grad.item(), rtol=tol))
 
 if __name__ == "__main__":
     unittest.main()

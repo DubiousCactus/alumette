@@ -32,7 +32,7 @@ class LogOp(Op):
         parents = node.parents
         assert len(parents) == 1, "LogOp has more than one parent!"
         # TODO: Write unit test
-        parents[0].grad += 1/node.data * node.grad
+        parents[0].grad += 1 / node.data * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
@@ -47,7 +47,6 @@ class ExpOp(Op):
         assert len(parents) == 1, "ExpOp has more than one parent!"
         parents[0].grad += math.exp(node.data) * node.grad
 
-
     @staticmethod
     def act(node: Tensor) -> Tensor:
         return Tensor(math.exp(node.data), _parents=(node,), _grad_fn=ExpOp.backward)
@@ -59,7 +58,7 @@ class SoftPlusOp(Op):
         # TODO: Write unit test
         parents = node.parents
         assert len(parents) == 1, "SoftPLusOp has more than one parent!"
-        parents[0].grad += 1/(1+math.exp(-node.data)) * node.grad
+        parents[0].grad += 1 / (1 + math.exp(-node.data)) * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
@@ -78,11 +77,16 @@ class SoftPlusOp(Op):
         )
 
 
-def mean(values: List[Tensor]) -> Tensor:
+def mean(values: List[Tensor] | Tensor) -> Tensor:
     # TODO: Write an op to reduce number of nodes
     # TODO: Write a test for this
-    values = values if isinstance(values, list) else [values]
-    return reduce(lambda a, b: a + b, values) / len(values)
+    if isinstance(values, list):
+        values = values if isinstance(values, list) else [values]
+        return reduce(lambda a, b: a + b, values) / len(values)
+    # elif isinstance(values, Tensor):
+    # assert len(values.shape) == 1 # TODO: Handle matrices
+    # comps = [values[i] for i in range(values.shape[0])]
+    #     return reduce(lambda a, b: a + b, comps) / len(comps)
 
 
 class ReLUOp(Op):
@@ -90,12 +94,22 @@ class ReLUOp(Op):
     def backward(node: Tensor) -> None:
         parents = node.parents
         assert len(parents) == 1, "ReLUOp has more than one parent!"
-        assert node.data >= 0, "ReLU's output node has negative value"
-        parents[0].grad += (1 if node.data > 0 else 0) * node.grad
+        assert np.all(node.data >= 0), "ReLU's output node has negative value"
+        parents[0].grad = (
+            parents[0].grad
+            + np.where(
+                node.data > 0,
+                np.ones_like(parents[0].grad),
+                np.zeros_like(parents[0].grad),
+            )
+            * node.grad
+        )
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
-        return Tensor(np.maximum(0, node.data), _parents=(node,), _grad_fn=ReLUOp.backward)
+        return Tensor(
+            np.maximum(0, node.data), _parents=(node,), _grad_fn=ReLUOp.backward
+        )
 
 
 class TanhOp(Op):
@@ -103,7 +117,7 @@ class TanhOp(Op):
     def backward(node: Tensor) -> None:
         parents = node.parents
         assert len(parents) == 1, "TanhOp has more than one parent!"
-        parents[0].grad += (1 - node.data**2) * node.grad
+        parents[0].grad = parents[0].grad + (np.ones_like(node.data) - node.data**2) * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:

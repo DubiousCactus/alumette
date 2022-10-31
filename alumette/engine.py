@@ -83,6 +83,9 @@ class Tensor:
     def __repr__(self) -> str:
         return f"Tensor(data={self.data}, grad={self.grad}, _grad_fn={self._grad_fn})"
 
+    def __getitem__(self, idx: int | Tuple[int]) -> any:
+        return self.data[idx]
+
     def __add__(self, other):
         other = (
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
