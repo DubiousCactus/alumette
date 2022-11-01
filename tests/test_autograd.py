@@ -294,11 +294,69 @@ class ScalarManualTests(unittest.TestCase):
             * (1 - (alumette.tanh(a - b).data ** 2)),
         )
 
-
 class MatrixGradcheckTests(unittest.TestCase):
     """
     More complex tests suite using grad_check.
     """
+    def test_add_self(self):
+        a = Tensor(np.random.random((random.randint(1, 50), random.randint(1, 50))))
+        (a + a + a).backward()
+        self.assertEqual(a.grad, np.ones_like(a)*3)
+
+    def test_r_add(self):
+        dims = (random.randint(1, 50), random.randint(1, 50))
+        a = Tensor(np.random.random(dims))
+        b = Tensor(np.random.random(dims))
+        (b + a).backward()
+        self.assertEqual(a.grad, np.ones_like(a))
+
+    def test_r_sub(self):
+        dims = (random.randint(1, 50), random.randint(1, 50))
+        a = Tensor(np.random.random(dims))
+        b = Tensor(np.random.random(dims))
+        L = b - a
+        L.backward()
+        self.assertEqual(a.grad, -np.ones_like(a))
+
+    def test_r_mul(self):
+        a = Tensor(random.uniform(-100, 100))
+        b = random.uniform(-100, 100)
+        L = b * a
+        L.backward()
+        self.assertTrue(np.allclose(a.grad, b))
+
+    def test_neg_r_mul(self):
+        a = Tensor(random.uniform(-100, 100))
+        b = random.uniform(-100, 100)
+        L = (-b) * a
+        L.backward()
+        self.assertTrue(np.allclose(a.grad, -b))
+
+    def test_positive_pow(self):
+        a = Tensor(random.uniform(-100, 100))
+        b = int(random.uniform(0, 10))
+        (a**b).backward()
+        self.assertTrue(np.allclose(a.grad, b * (a.data ** (b - 1))))
+
+    def test_negative_pow(self):
+        a = Tensor(random.uniform(-100, 100))
+        b = int(random.uniform(-10, -1))
+        (a**b).backward()
+        self.assertTrue(np.allclose(a.grad, b * (a.data ** (b - 1))))
+
+    def test_zero_pow(self):
+        a = Tensor(random.uniform(-100, 100))
+        b = 0
+        (a**b).backward()
+        self.assertEqual(a.grad, 0)
+
+    def test_div(self):
+        a, b = Tensor(random.uniform(-10, 10)), Tensor(random.uniform(-10, 10))
+        L = a / b
+        L.backward()
+        self.assertTrue(np.allclose(a.grad, 1 / b.data))
+        self.assertTrue(np.allclose(b.grad, -a.data / (b.data**2)))
+
 
     def test_vector_matmul(self):
         dim = random.randint(1, 20)
