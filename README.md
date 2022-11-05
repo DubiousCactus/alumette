@@ -11,6 +11,6 @@ code ;)
 - [x] Build autograd on scalars
 - [x] Build small neural network library
 - [x] Write neural net example
-- [ ] Test gradients numerically
-- [ ] Implement a Tensor class
+- [x] Test gradients numerically
+- [x] Implement a Tensor class
 - [ ] GPU acceleration (PyCuda?)

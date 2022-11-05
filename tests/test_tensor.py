@@ -63,5 +63,28 @@ class TensorOpsTests(unittest.TestCase):
         self.assertTrue(np.allclose(a.data, val.astype(np.intc)))
         self.assertEqual(a.data.dtype, np.intc)
 
+    def test_itemize(self):
+        array = np.random.random((random.randint(2,10), random.randint(2,10)))
+        t = Tensor(array)
+        throws = False
+        try:
+            _ = t.item()
+        except Exception:
+            throws = True
+        finally:
+            self.assertTrue(throws)
+        array = np.random.random((random.randint(2, 10), 1))
+        t = Tensor(array)
+        self.assertEqual(t.squeeze().shape, (array.shape[0],))
+        val = random.random()
+        t = Tensor([[[val]]])
+        self.assertAlmostEqual(t.item() , val)
+        val = random.random()
+        t = Tensor([val])
+        self.assertAlmostEqual(t.item() , val)
+        val = random.random()
+        t = Tensor(val)
+        self.assertAlmostEqual(t.item() , val)
+
 if __name__ == "__main__":
     unittest.main()

@@ -196,8 +196,10 @@ class Tensor:
         return self.data.dtype
 
     def item(self) -> float:
-        assert len(self.data.shape) == 1
-        return self.data[0]
+        zeroD = self.data.squeeze()
+        if zeroD.shape != ():
+            raise ValueError(".item() can only be called for Tensors of one element")
+        return zeroD.item()
 
     @property
     def T(self):
@@ -207,11 +209,19 @@ class Tensor:
         return self.data
 
     def __getattr__(self, name):
+        # TODO: Somehow warn the user that the graph now contains a non-differentiable op!
         try:
             return getattr(self.data, name)
         except AttributeError:
             raise AttributeError(f"'alumette.Tensor' object has no attribute '{name}'")
 
+    def unsqueeze(self, dim=0):
+        self.data = np.expand_dims(self.data, dim)
+        return self
+
+    def squeeze(self):
+        self.data = self.data.squeeze()
+        return self
 
 class AddOp(Op):
     @staticmethod
