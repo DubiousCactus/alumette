@@ -276,18 +276,22 @@ class ScalarManualTests(unittest.TestCase):
     def test_tanh_op_backward(self):
         a = Tensor(random.uniform(-100, 100))
         (alumette.tanh(a)).backward()
-        self.assertEqual(a.grad, 1 - (alumette.tanh(a).data ** 2))
+        self.assertTrue(np.allclose(a.grad, 1 - (alumette.tanh(a).data ** 2)))
 
     def test_MSE_tanh(self):
         a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
         (alumette.tanh((a - b)) ** 2).backward()
-        self.assertEqual(
-            a.grad,
-            2 * alumette.tanh(a - b).data * (1 - (alumette.tanh(a - b).data ** 2)),
+        self.assertTrue(
+            np.allclose(
+                a.grad,
+                2 * alumette.tanh(a - b).data * (1 - (alumette.tanh(a - b).data ** 2)),
+            )
         )
-        self.assertEqual(
-            b.grad,
-            -2 * alumette.tanh(a - b).data * (1 - (alumette.tanh(a - b).data ** 2)),
+        self.assertTrue(
+            np.allclose(
+                b.grad,
+                -2 * alumette.tanh(a - b).data * (1 - (alumette.tanh(a - b).data ** 2)),
+            )
         )
 
 

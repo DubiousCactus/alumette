@@ -25,12 +25,12 @@ from typing import Callable, List
 import numpy as np
 
 
-def grad_check(inputs: List[Tensor], exp: Callable, wrt: int, grad: np.ndarray | float):
+def grad_check(inputs: List[Tensor], exp: Callable, wrt: int, grad: np.ndarray):
     """
     Use numerical gradient computation to compute the gradients of an entire arbitrary expression
     with respect to one of its inputs.
     """
-    const = np.array(1e-9, dtype=np.float128)
+    const = np.array(1e-8, dtype=np.float128)
     raw_inputs = [x.numpy().copy().astype(np.float128) for x in inputs]
     raw_output = exp(*raw_inputs)
     if isinstance(raw_output, Tensor):
@@ -45,6 +45,6 @@ def grad_check(inputs: List[Tensor], exp: Callable, wrt: int, grad: np.ndarray |
         num_grad[i] = (delta_output - raw_output) / const
         raw_inputs[wrt][i] = og
     assert np.allclose(
-        num_grad, grad, rtol=1e-4
+        num_grad, grad.astype(np.float128), rtol=1e-3
     ), f"Numerical grad: {num_grad} -- Given grad: {grad}"
     return True

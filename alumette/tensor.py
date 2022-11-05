@@ -284,9 +284,6 @@ class PowOp(Op):
     @staticmethod
     def backward(node: Tensor) -> None:
         parents = node.parents
-        assert (
-            node.grad != 0
-        ), "Output node has a 0 gradient while trying to backpropagate to parents!"
         # TODO: Handle pow(value, value)!
         parents[0].grad += (
             parents[1].data * (parents[0].data ** (parents[1].data - 1)) * node.grad
