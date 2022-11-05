@@ -10,7 +10,7 @@
 Karpathy's autograd replica.
 """
 
-from .engine import Tensor, set_default_dtype
+from .tensor import Tensor
 from .ops import (
     mean,
     relu,
@@ -30,12 +30,12 @@ def grad_check(inputs: List[Tensor], exp: Callable, wrt: int, grad: np.ndarray |
     Use numerical gradient computation to compute the gradients of an entire arbitrary expression
     with respect to one of its inputs.
     """
-    const = 1e-8
+    const = np.array(1e-9, dtype=np.float128)
     raw_inputs = [x.numpy().copy().astype(np.float128) for x in inputs]
     raw_output = exp(*raw_inputs)
     if isinstance(raw_output, Tensor):
         raw_output = raw_output.numpy()
-    num_grad = np.zeros_like(raw_inputs[wrt])
+    num_grad = np.zeros_like(raw_inputs[wrt], dtype=np.float128)
     for i in np.ndindex(raw_inputs[wrt].shape):
         og = raw_inputs[wrt][i]
         raw_inputs[wrt][i] += const
@@ -45,6 +45,6 @@ def grad_check(inputs: List[Tensor], exp: Callable, wrt: int, grad: np.ndarray |
         num_grad[i] = (delta_output - raw_output) / const
         raw_inputs[wrt][i] = og
     assert np.allclose(
-        num_grad, grad, rtol=1e-3
+        num_grad, grad, rtol=1e-4
     ), f"Numerical grad: {num_grad} -- Given grad: {grad}"
     return True

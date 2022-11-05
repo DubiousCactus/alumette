@@ -12,7 +12,7 @@ Diverse ops
 from functools import reduce
 from typing import List, Any
 
-from .engine import Tensor
+from .tensor import Tensor
 
 import numpy as np
 import math

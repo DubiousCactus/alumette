@@ -229,7 +229,7 @@ class ScalarManualTests(unittest.TestCase):
         L = (-d * (e - a)) + ((f + b) / (c**f))
         L.backward()
         self.assertTrue(np.allclose(a.grad, d))
-        self.assertEqual(b.grad, 1 / (c.data**f))
+        self.assertTrue(np.allclose(b.grad, 1 / (c.data**f)))
         self.assertTrue(np.allclose(c.grad, -f * (c.data ** (-f - 1)) * (f + b.data)))
 
     def test_relu_op_backward(self):
@@ -301,35 +301,32 @@ class MatrixGradcheckTests(unittest.TestCase):
     def test_add_self(self):
         a = Tensor(np.random.random((random.randint(1, 50), random.randint(1, 50))))
         (a + a + a).backward()
-        self.assertEqual(a.grad, np.ones_like(a)*3)
+        self.assertTrue(np.allclose(a.grad, np.ones_like(a.data)*3))
 
     def test_r_add(self):
         dims = (random.randint(1, 50), random.randint(1, 50))
         a = Tensor(np.random.random(dims))
         b = Tensor(np.random.random(dims))
         (b + a).backward()
-        self.assertEqual(a.grad, np.ones_like(a))
+        self.assertTrue(np.allclose(a.grad, np.ones_like(a.data)))
 
     def test_r_sub(self):
         dims = (random.randint(1, 50), random.randint(1, 50))
         a = Tensor(np.random.random(dims))
         b = Tensor(np.random.random(dims))
-        L = b - a
-        L.backward()
-        self.assertEqual(a.grad, -np.ones_like(a))
+        (b - a).backward()
+        self.assertTrue(np.allclose(a.grad, -np.ones_like(a.data)))
 
     def test_r_mul(self):
         a = Tensor(random.uniform(-100, 100))
         b = random.uniform(-100, 100)
-        L = b * a
-        L.backward()
+        (b * a).backward()
         self.assertTrue(np.allclose(a.grad, b))
 
     def test_neg_r_mul(self):
         a = Tensor(random.uniform(-100, 100))
         b = random.uniform(-100, 100)
-        L = (-b) * a
-        L.backward()
+        ((-b) * a).backward()
         self.assertTrue(np.allclose(a.grad, -b))
 
     def test_positive_pow(self):
@@ -356,7 +353,6 @@ class MatrixGradcheckTests(unittest.TestCase):
         L.backward()
         self.assertTrue(np.allclose(a.grad, 1 / b.data))
         self.assertTrue(np.allclose(b.grad, -a.data / (b.data**2)))
-
 
     def test_vector_matmul(self):
         dim = random.randint(1, 20)

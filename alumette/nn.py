@@ -10,15 +10,14 @@
 Neural Nets yaaay.
 """
 
-from functools import reduce
-from typing import Any, List, Tuple, Union
-
-from .engine import Tensor
-import alumette
+import abc
+from typing import Any, List
 
 import numpy as np
-import random
-import abc
+
+import alumette
+
+from .tensor import Tensor
 
 
 class Module:
@@ -100,7 +99,7 @@ class MLP(NeuralNet):
         return y
 
 
-def MSE(x: Union[List[Tensor], Tensor], y: Union[List[Tensor], Tensor], reduce='mean'):
+def MSE(x: List[Tensor] | Tensor, y: List[Tensor] | Tensor, reduce='mean'):
     if isinstance(x, list) or isinstance(y, list):
         assert type(x) is type(
             y

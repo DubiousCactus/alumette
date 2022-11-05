@@ -43,28 +43,25 @@ class NoOp(Op):
             p.grad = p.grad + node.grad
 
 
-def make_tensor_data(x: Any) -> np.ndarray:
+def make_tensor_data(x: Any, dtype=None) -> np.ndarray:
+    type_ = DEFAULT_DTYPE if dtype is None else dtype
     if isinstance(x, np.ndarray):
-        return x.astype(DEFAULT_DTYPE)
+        type_ = x.dtype if dtype is None else dtype
+        return x.astype(type_)
     elif isinstance(x, list):
-        return np.array(x, dtype=DEFAULT_DTYPE)
+        return np.array(x, dtype=type_)
     elif (
         isinstance(x, float)
         or isinstance(x, int)
-        or type(x) in [np.float32, np.float16, np.float64, np.float128]
     ):
-        return np.array([x], dtype=DEFAULT_DTYPE)
+        return np.array(x, dtype=type_)
+    elif type(x) in [np.float32, np.float16, np.float64, np.float128, np.int32, np.int64]:
+        return np.array(x, dtype=type(x))
     else:
         raise TypeError(
             f"Tensor class only accepts np.ndarray and compatible data, not {type(x)}"
         )
 
-def set_default_dtype(dtype):
-    """
-    Used for unit tests.
-    """
-    global DEFAULT_DTYPE
-    DEFAULT_DTYPE = dtype
 
 class Tensor:
     def __init__(
@@ -73,8 +70,9 @@ class Tensor:
         _parents=(),
         _grad_fn=NoOp.backward,
         requires_grad=True,
+        dtype=None,
     ):
-        self.data = make_tensor_data(data)
+        self.data = make_tensor_data(data, dtype=dtype)
         self._parents = _parents
         self.grad = np.array([0.0])
         self._grad_fn = _grad_fn
@@ -83,7 +81,7 @@ class Tensor:
     def __repr__(self) -> str:
         return f"Tensor(data={self.data}, grad={self.grad}, _grad_fn={self._grad_fn})"
 
-    def __getitem__(self, idx: int | Tuple[int]) -> any:
+    def __getitem__(self, idx: int | Tuple[int]) -> DEFAULT_DTYPE:
         return self.data[idx]
 
     def __add__(self, other):
@@ -165,7 +163,7 @@ class Tensor:
     # def __hash__(self) -> int:
     #         return hash(self.data) + sum([hash(o) for o in self.parents])
 
-    def backward(self):
+    def backward(self) -> None:
         topology = []
         visited = set()
 
@@ -177,10 +175,10 @@ class Tensor:
                         build_topology(p)
                 topology.append(node)
 
-        assert (
-            self.data.squeeze().shape == ()
-        ), "grad can be implicitly created only for scalar outputs"
-        self.grad = np.ones((1,))
+        # assert (
+            # self.data.squeeze().shape == ()
+        # ), "grad can be implicitly created only for scalar outputs"
+        self.grad = np.ones_like(self.data)
         build_topology(self)
         for node in reversed(topology):
             node._grad_fn(node)
@@ -205,8 +203,14 @@ class Tensor:
     def T(self):
         return Tensor(self.data.T, _parents=(self,))
 
-    def numpy(self):
+    def numpy(self) -> np.ndarray:
         return self.data
+
+    def __getattr__(self, name):
+        try:
+            return getattr(self.data, name)
+        except AttributeError:
+            raise AttributeError(f"'alumette.Tensor' object has no attribute '{name}'")
 
 
 class AddOp(Op):
