@@ -258,8 +258,8 @@ class ScalarManualTests(unittest.TestCase):
         c = int(random.uniform(-10, 10))
         L = (a - b) ** c
         L.backward()
-        self.assertEqual(a.grad, c * ((a.data - b.data) ** (c - 1)))
-        self.assertEqual(b.grad, -c * ((a.data - b.data) ** (c - 1)))
+        self.assertTrue(np.allclose(a.grad, c * ((a.data - b.data) ** (c - 1))))
+        self.assertTrue(np.allclose(b.grad, -c * ((a.data - b.data) ** (c - 1))))
 
     def test_MSE_relu(self):
         a, b = Tensor(random.uniform(-100, 100)), Tensor(random.uniform(-100, 100))
@@ -422,8 +422,9 @@ class MatrixGradcheckTests(unittest.TestCase):
         c = Tensor(np.random.random((mat_dim[1])))
         exp = lambda w, x, b, c: (w.T @ x + b) @ c
         def relu_layer(w, x, b, c):
-            res = Tensor(exp(w,x,b,c))
+            res = exp(w,x,b,c)
             return alumette.relu(res)
+        relu_layer(w, x, b, c).backward()
         self.assertTrue(grad_check([w, x, b, c], relu_layer, 0, np.array(w.grad)))
         self.assertTrue(grad_check([w, x, b, c], relu_layer, 2, np.array(b.grad)))
         self.assertTrue(grad_check([w, x, b, c], relu_layer, 3, np.array(c.grad)))

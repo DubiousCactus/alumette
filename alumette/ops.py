@@ -133,3 +133,4 @@ relu = ReLUOp.act
 tanh = TanhOp.act
 exp = ExpOp.act
 log = LogOp.act
+

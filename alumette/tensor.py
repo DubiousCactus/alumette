@@ -57,6 +57,8 @@ def make_tensor_data(x: Any, dtype=None) -> np.ndarray:
         return np.array(x, dtype=type_)
     elif type(x) in [np.float32, np.float16, np.float64, np.float128, np.int32, np.int64]:
         return np.array(x, dtype=type(x))
+    elif isinstance(x, Tensor):
+        raise NotImplementedError("Tensor creation from other Tensor is not yet supported")
     else:
         raise TypeError(
             f"Tensor class only accepts np.ndarray and compatible data, not {type(x)}"
