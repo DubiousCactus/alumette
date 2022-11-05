@@ -124,7 +124,6 @@ class Tensor:
         )
 
     def __neg__(self):
-        # Could to return self * -1 but that would result in one more function call...
         return self * -1
 
     def __sub__(self, other):
@@ -132,7 +131,6 @@ class Tensor:
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
         return self + (-other)
-        # return Tensor(-self.data, _grad_fn=NegOp.backward)
 
     def __truediv__(self, other):
         other = (
@@ -226,9 +224,6 @@ class MulOp(Op):
     @staticmethod
     def backward(node: Tensor) -> None:
         parents = node.parents
-        # assert (
-        # node.grad != 0
-        # ), "Output node has a 0 gradient while trying to backpropagate to parents!"
         parents[0].grad = parents[0].grad + node.grad * parents[1].data
         parents[1].grad = parents[1].grad + node.grad * parents[0].data
 
@@ -236,11 +231,8 @@ class MulOp(Op):
 class MatMulOp(Op):
     @staticmethod
     def backward(node: Tensor) -> None:
-        # TODO: Write unit test
+        # TODO: Write more unit test?
         parents = node.parents
-        # assert (
-        # node.grad != 0
-        # ), "Output node has a 0 gradient while trying to backpropagate to parents!"
         if len(parents[0].shape) > 1 and len(parents[1].shape) == 1:
             # Matrix-vector product: Ab
             parents[0].grad = (

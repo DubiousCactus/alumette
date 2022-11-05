@@ -19,6 +19,7 @@ from .ops import (
     exp,
     log,
 )
+from .utils import allclose
 
 from typing import Callable, List
 
