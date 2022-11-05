@@ -283,25 +283,23 @@ class ScalarManualTests(unittest.TestCase):
         (alumette.tanh((a - b)) ** 2).backward()
         self.assertEqual(
             a.grad,
-            2
-            * alumette.tanh(a - b).data
-            * (1 - (alumette.tanh(a - b).data ** 2)),
+            2 * alumette.tanh(a - b).data * (1 - (alumette.tanh(a - b).data ** 2)),
         )
         self.assertEqual(
             b.grad,
-            -2
-            * alumette.tanh(a - b).data
-            * (1 - (alumette.tanh(a - b).data ** 2)),
+            -2 * alumette.tanh(a - b).data * (1 - (alumette.tanh(a - b).data ** 2)),
         )
+
 
 class MatrixGradcheckTests(unittest.TestCase):
     """
     More complex tests suite using grad_check.
     """
+
     def test_add_self(self):
         a = Tensor(np.random.random((random.randint(1, 50), random.randint(1, 50))))
         (a + a + a).backward()
-        self.assertTrue(np.allclose(a.grad, np.ones_like(a.data)*3))
+        self.assertTrue(np.allclose(a.grad, np.ones_like(a.data) * 3))
 
     def test_r_add(self):
         dims = (random.randint(1, 50), random.randint(1, 50))
@@ -421,13 +419,33 @@ class MatrixGradcheckTests(unittest.TestCase):
         b = Tensor(np.random.random((mat_dim[1])))
         c = Tensor(np.random.random((mat_dim[1])))
         exp = lambda w, x, b, c: (w.T @ x + b) @ c
+
         def relu_layer(w, x, b, c):
-            res = exp(w,x,b,c)
-            return alumette.relu(res)
+            res = exp(w, x, b, c)
+            return alumette.relu(Tensor(res) if not isinstance(res, Tensor) else res)
+
         relu_layer(w, x, b, c).backward()
         self.assertTrue(grad_check([w, x, b, c], relu_layer, 0, np.array(w.grad)))
         self.assertTrue(grad_check([w, x, b, c], relu_layer, 2, np.array(b.grad)))
         self.assertTrue(grad_check([w, x, b, c], relu_layer, 3, np.array(c.grad)))
+
+    def test_linear_layer_tanh(self):
+        vec_dim = random.randint(2, 20)
+        mat_dim = vec_dim, random.randint(2, 20)
+        w = Tensor(np.random.random(mat_dim))
+        x = Tensor(np.random.random((vec_dim)))
+        b = Tensor(np.random.random((mat_dim[1])))
+        c = Tensor(np.random.random((mat_dim[1])))
+        exp = lambda w, x, b, c: (w.T @ x + b) @ c
+
+        def tanh_layer(w, x, b, c):
+            res = exp(w, x, b, c)
+            return alumette.tanh(Tensor(res) if not isinstance(res, Tensor) else res)
+
+        tanh_layer(w, x, b, c).backward()
+        self.assertTrue(grad_check([w, x, b, c], tanh_layer, 0, np.array(w.grad)))
+        # self.assertTrue(grad_check([w, x, b, c], tanh_layer, 2, np.array(b.grad)))
+        # self.assertTrue(grad_check([w, x, b, c], tanh_layer, 3, np.array(c.grad)))
 
 
 if __name__ == "__main__":

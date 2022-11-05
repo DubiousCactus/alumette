@@ -15,7 +15,6 @@ from typing import List, Any
 from .tensor import Tensor
 
 import numpy as np
-import math
 import abc
 
 
@@ -36,7 +35,7 @@ class LogOp(Op):
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
-        return Tensor(math.log(node.data), _parents=(node,), _grad_fn=LogOp.backward)
+        return Tensor(np.log(node.data), _parents=(node,), _grad_fn=LogOp.backward)
 
 
 class ExpOp(Op):
@@ -45,11 +44,11 @@ class ExpOp(Op):
         # TODO: Write unit test
         parents = node.parents
         assert len(parents) == 1, "ExpOp has more than one parent!"
-        parents[0].grad += math.exp(node.data) * node.grad
+        parents[0].grad += np.exp(node.data) * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
-        return Tensor(math.exp(node.data), _parents=(node,), _grad_fn=ExpOp.backward)
+        return Tensor(np.exp(node.data), _parents=(node,), _grad_fn=ExpOp.backward)
 
 
 class SoftPlusOp(Op):
@@ -58,7 +57,7 @@ class SoftPlusOp(Op):
         # TODO: Write unit test
         parents = node.parents
         assert len(parents) == 1, "SoftPLusOp has more than one parent!"
-        parents[0].grad += 1 / (1 + math.exp(-node.data)) * node.grad
+        parents[0].grad += 1 / (1 + np.exp(-node.data)) * node.grad
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
@@ -122,8 +121,8 @@ class TanhOp(Op):
     @staticmethod
     def act(node: Tensor) -> Tensor:
         n = node.data
-        t = (np.exp(np.clip(2 * n, 709, -708)) - 1) / (
-            np.exp(np.clip(2 * n, 709, -708)) + 1
+        t = (np.exp(np.clip(2 * n, -708, 709)) - 1) / (
+            np.exp(np.clip(2 * n, -708, 709)) + 1
         )
         return Tensor(t, _parents=(node,), _grad_fn=TanhOp.backward)
 
