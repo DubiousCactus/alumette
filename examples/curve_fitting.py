@@ -12,7 +12,7 @@ Test the neural network library on a toy regression problem.
 import random
 
 from alumette import Tensor
-from alumette.nn import NeuralNet, Linear, SGD, MSE
+from alumette.nn import MLP, NeuralNet, Linear, SGD, MSE
 
 from tqdm import trange
 
@@ -34,7 +34,15 @@ def test_func_1(x):
 
 
 def main():
-    nn = MyNet()
+    # nn = MyNet()
+    nn = MLP(
+        input_dim=1,
+        layer_width=15,
+        output_dim=1,
+        n_layers=2,
+        activation="relu",
+        output_activation="identity",
+    )
     opt = SGD(nn.parameters(), lr=1e-5)
     xs = []
     for _ in range(1000):

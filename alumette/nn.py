@@ -12,6 +12,7 @@ Neural Nets yaaay.
 
 import abc
 from typing import Any, List
+from functools import reduce
 
 import numpy as np
 
@@ -28,10 +29,19 @@ class Module:
     def parameters(self) -> List[Tensor]:
         return []
 
+
 class Linear(Module):
-    def __init__(self, input_dim: int, output_dim: int, activation="relu", use_bias=True) -> None:
-        self.weights = Tensor(np.random.random((input_dim, output_dim)), requires_grad=True)
-        self.bias = Tensor(np.random.random((output_dim)), requires_grad=True) if use_bias else None
+    def __init__(
+        self, input_dim: int, output_dim: int, activation="relu", use_bias=True
+    ) -> None:
+        self.weights = Tensor(
+            np.random.random((input_dim, output_dim)), requires_grad=True
+        )
+        self.bias = (
+            Tensor(np.random.random((output_dim)), requires_grad=True)
+            if use_bias
+            else None
+        )
         self._activation = activation
 
     def __call__(self, x: Tensor) -> Any:
@@ -74,6 +84,7 @@ class NeuralNet(abc.ABC, Module):
 
         return find_params(self)
 
+
 class MLP(NeuralNet):
     def __init__(
         self,
@@ -92,14 +103,10 @@ class MLP(NeuralNet):
         ]
 
     def forward(self, x):
-        # TODO: return reduce(lambda layer_n, layer_n1: layer_n1(layer_n(x)), self.layers)
-        y = x
-        for l in self.layers:
-            y = l(y)
-        return y
+        return reduce(lambda layer_n, layer_n1: layer_n1(layer_n), self.layers, x)
 
 
-def MSE(x: List[Tensor] | Tensor, y: List[Tensor] | Tensor, reduce='mean'):
+def MSE(x: List[Tensor] | Tensor, y: List[Tensor] | Tensor, reduce="mean"):
     if isinstance(x, list) or isinstance(y, list):
         assert type(x) is type(
             y
@@ -113,7 +120,7 @@ def MSE(x: List[Tensor] | Tensor, y: List[Tensor] | Tensor, reduce='mean'):
             y, Tensor
         ), "Arguments of MSE must be Tensor objects!"
         res = (x - y) ** 2
-    if reduce == 'mean':
+    if reduce == "mean":
         pass
         # res = alumette.mean(res)
         # print(res)

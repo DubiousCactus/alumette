@@ -241,7 +241,7 @@ class MulOp(Op):
 class MatMulOp(Op):
     @staticmethod
     def backward(node: Tensor) -> None:
-        # TODO: Write more unit test?
+        # TODO: Write more unit tests?
         parents = node.parents
         if len(parents[0].shape) > 1 and len(parents[1].shape) == 1:
             # Matrix-vector product: Ab
