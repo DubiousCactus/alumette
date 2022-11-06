@@ -34,7 +34,7 @@ def test_func_1(x):
 
 
 def main():
-    # nn = MyNet()
+    # nn = MyNet() or use the library's MLP:
     nn = MLP(
         input_dim=1,
         layer_width=15,
@@ -44,9 +44,7 @@ def main():
         output_activation="identity",
     )
     opt = SGD(nn.parameters(), lr=1e-5)
-    xs = []
-    for _ in range(1000):
-        xs.append(random.uniform(-1, 1))
+    xs = [random.uniform(-1, 1) for _ in range(1000)]
 
     N_EPOCHS = 1000
     t = trange(N_EPOCHS, desc="Training", leave=True)
@@ -68,8 +66,8 @@ def main():
         t.refresh()  # to show immediately the update
 
     print("[*] Testing...")
-    for _ in range(500):
-        xs.append(random.uniform(-1, 1))
+
+    xs = [random.uniform(-1, 1) for _ in range(500)]
     ys = [test_func_1(x) for x in xs]
 
     test_loss = 0.0

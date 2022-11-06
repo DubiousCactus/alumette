@@ -29,7 +29,6 @@ class Module:
     def parameters(self) -> List[Tensor]:
         return []
 
-
 class Linear(Module):
     def __init__(
         self, input_dim: int, output_dim: int, activation="relu", use_bias=True

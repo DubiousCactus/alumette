@@ -35,7 +35,12 @@ class LogOp(Op):
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
-        return Tensor(np.log(node.data), _parents=(node,), _grad_fn=LogOp.backward)
+        return Tensor(
+            np.log(node.data),
+            _parents=(node,),
+            _grad_fn=LogOp.backward,
+            requires_grad=True,
+        )
 
 
 class ExpOp(Op):
@@ -48,7 +53,12 @@ class ExpOp(Op):
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
-        return Tensor(np.exp(node.data), _parents=(node,), _grad_fn=ExpOp.backward)
+        return Tensor(
+            np.exp(node.data),
+            _parents=(node,),
+            _grad_fn=ExpOp.backward,
+            requires_grad=True,
+        )
 
 
 class SoftPlusOp(Op):
@@ -65,7 +75,7 @@ class SoftPlusOp(Op):
         SoftPlus is a smooth approximation to the ReLU function and can be used to constrain the
         output of a machine to always be positive.
         """
-        exp = ExpOp.act(Tensor(node.data, requires_grad=False))
+        exp = ExpOp.act(Tensor(node.data, requires_grad=True))
         exp.requires_grad = False
         log = LogOp.act(1 + exp)
         log.requires_grad = False
@@ -73,6 +83,7 @@ class SoftPlusOp(Op):
             log.data,
             _parents=(node,),
             _grad_fn=SoftPlusOp.backward,
+            requires_grad=True,
         )
 
 
@@ -107,7 +118,10 @@ class ReLUOp(Op):
     @staticmethod
     def act(node: Tensor) -> Tensor:
         return Tensor(
-            np.maximum(0, node.data), _parents=(node,), _grad_fn=ReLUOp.backward
+            np.maximum(0, node.data),
+            _parents=(node,),
+            _grad_fn=ReLUOp.backward,
+            requires_grad=True,
         )
 
 
@@ -116,7 +130,9 @@ class TanhOp(Op):
     def backward(node: Tensor) -> None:
         parents = node.parents
         assert len(parents) == 1, "TanhOp has more than one parent!"
-        parents[0].grad = parents[0].grad + (np.ones_like(node.data) - node.data**2) * node.grad
+        parents[0].grad = (
+            parents[0].grad + (np.ones_like(node.data) - node.data**2) * node.grad
+        )
 
     @staticmethod
     def act(node: Tensor) -> Tensor:
@@ -124,7 +140,7 @@ class TanhOp(Op):
         t = (np.exp(np.clip(2 * n, -708, 709)) - 1) / (
             np.exp(np.clip(2 * n, -708, 709)) + 1
         )
-        return Tensor(t, _parents=(node,), _grad_fn=TanhOp.backward)
+        return Tensor(t, _parents=(node,), _grad_fn=TanhOp.backward, requires_grad=True)
 
 
 softplus = SoftPlusOp.act
@@ -132,4 +148,3 @@ relu = ReLUOp.act
 tanh = TanhOp.act
 exp = ExpOp.act
 log = LogOp.act
-

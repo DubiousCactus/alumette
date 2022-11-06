@@ -26,7 +26,7 @@ Learning notes:
 """
 
 DEFAULT_DTYPE = np.float32
-sys.setrecursionlimit(1500)# TODO: Memoization
+sys.setrecursionlimit(1500)  # TODO: Memoization
 
 
 class Op(abc.ABC):
@@ -50,15 +50,21 @@ def make_tensor_data(x: Any, dtype=None) -> np.ndarray:
         return x.astype(type_)
     elif isinstance(x, list):
         return np.array(x, dtype=type_)
-    elif (
-        isinstance(x, float)
-        or isinstance(x, int)
-    ):
+    elif isinstance(x, float) or isinstance(x, int):
         return np.array(x, dtype=type_)
-    elif type(x) in [np.float32, np.float16, np.float64, np.float128, np.int32, np.int64]:
+    elif type(x) in [
+        np.float32,
+        np.float16,
+        np.float64,
+        np.float128,
+        np.int32,
+        np.int64,
+    ]:
         return np.array(x, dtype=type(x))
     elif isinstance(x, Tensor):
-        raise NotImplementedError("Tensor creation from other Tensor is not yet supported")
+        raise NotImplementedError(
+            "Tensor creation from other Tensor is not yet supported"
+        )
     else:
         raise TypeError(
             f"Tensor class only accepts np.ndarray and compatible data, not {type(x)}"
@@ -71,7 +77,7 @@ class Tensor:
         data: np.ndarray | float | int | List,
         _parents=(),
         _grad_fn=NoOp.backward,
-        requires_grad=True,
+        requires_grad=True, # Figure out how to make False default work!!
         dtype=None,
     ):
         self.data = make_tensor_data(data, dtype=dtype)
@@ -91,7 +97,10 @@ class Tensor:
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
         return Tensor(
-            self.data + other.data, _parents=(self, other), _grad_fn=AddOp.backward
+            self.data + other.data,
+            _parents=(self, other),
+            _grad_fn=AddOp.backward,
+            requires_grad=True,
         )
 
     def __mul__(self, other):
@@ -102,7 +111,10 @@ class Tensor:
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
         return Tensor(
-            self.data * other.data, _parents=(self, other), _grad_fn=MulOp.backward
+            self.data * other.data,
+            _parents=(self, other),
+            _grad_fn=MulOp.backward,
+            requires_grad=True,
         )
 
     def __matmul__(self, other):  # self @ other
@@ -110,7 +122,10 @@ class Tensor:
             other if isinstance(other, Tensor) else Tensor(other, requires_grad=False)
         )
         return Tensor(
-            self.data @ other.data, _parents=(self, other), _grad_fn=MatMulOp.backward
+            self.data @ other.data,
+            _parents=(self, other),
+            _grad_fn=MatMulOp.backward,
+            requires_grad=True,
         )
 
     def __pow__(self, other):
@@ -121,6 +136,7 @@ class Tensor:
             self.data**other,
             _parents=(self, Tensor(other, requires_grad=False)),
             _grad_fn=PowOp.backward,
+            requires_grad=True,
         )
 
     def __neg__(self):
@@ -176,7 +192,7 @@ class Tensor:
                 topology.append(node)
 
         # assert (
-            # self.data.squeeze().shape == ()
+        # self.data.squeeze().shape == ()
         # ), "grad can be implicitly created only for scalar outputs"
         self.grad = np.ones_like(self.data)
         build_topology(self)
@@ -203,7 +219,7 @@ class Tensor:
 
     @property
     def T(self):
-        return Tensor(self.data.T, _parents=(self,))
+        return Tensor(self.data.T, _parents=(self,), requires_grad=self.requires_grad)
 
     def numpy(self) -> np.ndarray:
         return self.data
@@ -223,12 +239,14 @@ class Tensor:
         self.data = self.data.squeeze()
         return self
 
+
 class AddOp(Op):
     @staticmethod
     def backward(node: Tensor) -> None:
         parents = node.parents
         parents[0].grad = parents[0].grad + node.grad
         parents[1].grad = parents[1].grad + node.grad
+
 
 class MulOp(Op):
     @staticmethod
