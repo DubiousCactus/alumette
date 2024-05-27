@@ -49,7 +49,7 @@ def make_tensor_data(x: Any, dtype=None) -> np.ndarray:
         return x.astype(type_)
     elif isinstance(x, list):
         return np.array(x, dtype=type_)
-    elif isinstance(x, float) or isinstance(x, int):
+    elif isinstance(x, (float, int)):
         return np.array(x, dtype=type_)
     elif type(x) in [
         np.float32,
