@@ -9,15 +9,17 @@
 Test the grad_check function
 """
 
-import numpy as np
-import unittest
 import random
+import unittest
+
+import numpy as np
 import torch
 
-from alumette import Tensor, grad_check
 import alumette
+from alumette import Tensor, grad_check
 
 N_RUNS = 1000
+
 
 class TestGradcheck(unittest.TestCase):
     def test_vector_mul(self):
@@ -27,10 +29,10 @@ class TestGradcheck(unittest.TestCase):
             b = Tensor(np.random.random((dim)))
             c = Tensor(np.random.random((dim)))
             exp = lambda a, b, c: (a * b) @ c
-            ta, tb, tc = torch.tensor(a.numpy().copy(), requires_grad=True), torch.tensor(
-                b.numpy().copy(), requires_grad=True
-            ), torch.tensor(
-                c.numpy().copy(), requires_grad=True
+            ta, tb, tc = (
+                torch.tensor(a.numpy().copy(), requires_grad=True),
+                torch.tensor(b.numpy().copy(), requires_grad=True),
+                torch.tensor(c.numpy().copy(), requires_grad=True),
             )
             exp(ta, tb, tc).backward()
             self.assertTrue(grad_check([a, b, c], exp, 0, np.array(ta.grad)))
@@ -43,8 +45,9 @@ class TestGradcheck(unittest.TestCase):
             a = Tensor(np.random.random((dim)))
             b = Tensor(np.random.random((dim)))
             exp = lambda a, b: a @ b
-            ta, tb = torch.tensor(a.numpy().copy(), requires_grad=True), torch.tensor(
-                b.numpy().copy(), requires_grad=True
+            ta, tb = (
+                torch.tensor(a.numpy().copy(), requires_grad=True),
+                torch.tensor(b.numpy().copy(), requires_grad=True),
             )
             exp(ta, tb).backward()
             self.assertTrue(grad_check([a, b], exp, 0, np.array(ta.grad)))
@@ -70,7 +73,6 @@ class TestGradcheck(unittest.TestCase):
             self.assertTrue(grad_check([a, b, c, d], exp, 1, np.array(tb.grad)))
             self.assertTrue(grad_check([a, b, c, d], exp, 2, np.array(tc.grad)))
             self.assertTrue(grad_check([a, b, c, d], exp, 3, np.array(td.grad)))
-
 
     def test_matrix_vector_matmul(self):
         for _ in range(N_RUNS):
@@ -119,8 +121,9 @@ class TestGradcheck(unittest.TestCase):
             b = Tensor(np.random.random((mat_dim[1])))
             c = Tensor(np.random.random((mat_dim[1])))
             exp = lambda w, x, b, c: (w.T @ x + b) @ c
+
             def relu_layer(w, x, b, c):
-                res = Tensor(exp(w,x,b,c))
+                res = Tensor(exp(w, x, b, c))
                 return alumette.relu(res)
 
             tw, tx, tb, tc = (
@@ -135,6 +138,7 @@ class TestGradcheck(unittest.TestCase):
             self.assertTrue(grad_check([w, x, b, c], relu_layer, 3, np.array(tc.grad)))
 
     # TODO: All edge cases where we have matrices of (Nx1), (1xN) and the sort
+
 
 if __name__ == "__main__":
     unittest.main()

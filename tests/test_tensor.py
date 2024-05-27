@@ -53,7 +53,7 @@ class TensorOpsTests(unittest.TestCase):
         self.assertEqual(a.data.dtype, np.intc)
 
     def test_create_from_numpy(self):
-        val = np.random.random((random.randint(1,10), random.randint(1,10)))
+        val = np.random.random((random.randint(1, 10), random.randint(1, 10)))
         a = Tensor(val)
         self.assertTrue(type(a.data), np.ndarray)
         self.assertTrue(np.allclose(a.data, val))
@@ -64,7 +64,7 @@ class TensorOpsTests(unittest.TestCase):
         self.assertEqual(a.data.dtype, np.intc)
 
     def test_itemize(self):
-        array = np.random.random((random.randint(2,10), random.randint(2,10)))
+        array = np.random.random((random.randint(2, 10), random.randint(2, 10)))
         t = Tensor(array)
         throws = False
         try:
@@ -78,13 +78,14 @@ class TensorOpsTests(unittest.TestCase):
         self.assertEqual(t.squeeze().shape, (array.shape[0],))
         val = random.random()
         t = Tensor([[[val]]])
-        self.assertAlmostEqual(t.item() , val)
+        self.assertAlmostEqual(t.item(), val)
         val = random.random()
         t = Tensor([val])
-        self.assertAlmostEqual(t.item() , val)
+        self.assertAlmostEqual(t.item(), val)
         val = random.random()
         t = Tensor(val)
-        self.assertAlmostEqual(t.item() , val)
+        self.assertAlmostEqual(t.item(), val)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,16 +5,16 @@
 #
 # Distributed under terms of the MIT license.
 
-import numpy as np
 import unittest
+
+import numpy as np
 import torch
 
-from alumette import Tensor
-from alumette import relu
+from alumette import Tensor, relu
+
 
 class TestTopology(unittest.TestCase):
     def test_sanity_check(self):
-
         x = Tensor(-4.0)
         z = 2 * x + 2 + x
         q = relu(z) + z * x
@@ -37,7 +37,6 @@ class TestTopology(unittest.TestCase):
         self.assertEqual(xmg.grad, xpt.grad.item())
 
     def test_more_ops(self):
-
         a = Tensor(-4.0)
         b = Tensor(2.0)
         c = a + b
@@ -74,6 +73,7 @@ class TestTopology(unittest.TestCase):
         self.assertTrue(np.allclose(gmg.data, gpt.data.item(), rtol=tol))
         self.assertTrue(np.allclose(amg.data, apt.data.item(), rtol=tol))
         self.assertTrue(np.allclose(bmg.grad, bpt.grad.item(), rtol=tol))
+
 
 if __name__ == "__main__":
     unittest.main()

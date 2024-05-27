@@ -10,11 +10,11 @@
 from setuptools import find_packages, setup
 
 setup(
-    name='alumette',
-    packages=find_packages(include=['alumette', 'alumette.nn']),
-    version='0.1.0',
-    description='Mini torch-like reverse-mode automatic differentiation and its tiny neural networks library',
-    author='Théo Morales',
-    license='MIT',
-    install_requires=['tqdm', 'numpy'],
+    name="alumette",
+    packages=find_packages(include=["alumette", "alumette.nn"]),
+    version="0.1.0",
+    description="Mini torch-like reverse-mode automatic differentiation and its tiny neural networks library",
+    author="Théo Morales",
+    license="MIT",
+    install_requires=["tqdm", "numpy"],
 )

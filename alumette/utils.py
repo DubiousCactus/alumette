@@ -11,6 +11,8 @@ from typing import List
 
 import numpy as np
 
+from alumette.tensor import Tensor
+
 
 def allclose(*tensors, **kwargs) -> bool:
     return np.allclose(
