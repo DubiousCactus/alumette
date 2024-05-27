@@ -10,14 +10,12 @@
 Karpathy's autograd replica.
 """
 
-from .tensor import Tensor
-from .ops import (
-    exp,
-    )
-
 from typing import Callable, List
 
 import numpy as np
+
+from .ops import exp
+from .tensor import Tensor
 
 
 def grad_check(inputs: List[Tensor], exp: Callable, wrt: int, grad: np.ndarray):

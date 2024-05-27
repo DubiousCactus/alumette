@@ -5,9 +5,7 @@
 #
 # Distributed under terms of the MIT license.
 
-"""
-
-"""
+""" """
 
 from typing import List
 
@@ -18,5 +16,5 @@ def allclose(*tensors, **kwargs) -> bool:
     return np.allclose(
         *[t.data for t in tensors],
         atol=kwargs.get("atol", 1e-5),
-        rtol=kwargs.get("rtol", 1e-5)
+        rtol=kwargs.get("rtol", 1e-5),
     )

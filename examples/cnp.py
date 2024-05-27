@@ -9,21 +9,20 @@
 Training a Conditional Neural Process
 """
 
-import matplotlib.pyplot as plt
-import numpy as np
-
-from alumette.nn import NeuralNet, MSE, SGD, MLP
-from alumette.engine import Value
-import alumette
-
-from numpy.random import default_rng
 from collections import namedtuple
 from typing import List
-from tqdm import tqdm
 
+import matplotlib.pyplot as plt
+import numpy as np
 from minigauss import GaussianProcess
 from minigauss.priors import ExponentialKernel
 from minigauss.priors.mean import ConstantFunc
+from numpy.random import default_rng
+from tqdm import tqdm
+
+import alumette
+from alumette.engine import Value
+from alumette.nn import MLP, MSE, SGD, NeuralNet
 
 sample = namedtuple("sample", ["context", "targets"])
 
@@ -114,8 +113,8 @@ class OracleGP:
         idx = np.zeros((self._batch_size, 100), dtype=int)
         for i in range(self._batch_size):
             idx[i, :] = np.random.permutation(100).astype(int)
-        sorted_ctx_x = [0]*self._batch_size#np.zeros((self._batch_size, n_context))
-        sorted_ctx_y = [0]*self._batch_size#np.zeros((self._batch_size, n_context))
+        sorted_ctx_x = [0] * self._batch_size  # np.zeros((self._batch_size, n_context))
+        sorted_ctx_y = [0] * self._batch_size  # np.zeros((self._batch_size, n_context))
         for i in range(self._batch_size):
             sorted_ctx_x[i] = [Value(x) for x in batch_x[i, idx[i, :n_context]]]
             sorted_ctx_y[i] = [Value(y) for y in batch_f[i, idx[i, :n_context]]]
@@ -128,11 +127,19 @@ class OracleGP:
         else:
             # sorted_tgt_x = np.zeros((self._batch_size, n_context+n_targets))
             # sorted_tgt_y = np.zeros((self._batch_size, n_context+n_targets))
-            sorted_tgt_x = [0]*self._batch_size#np.zeros((self._batch_size, n_context))
-            sorted_tgt_y = [0]*self._batch_size#np.zeros((self._batch_size, n_context))
+            sorted_tgt_x = [
+                0
+            ] * self._batch_size  # np.zeros((self._batch_size, n_context))
+            sorted_tgt_y = [
+                0
+            ] * self._batch_size  # np.zeros((self._batch_size, n_context))
             for i in range(self._batch_size):
-                sorted_tgt_x[i] = [Value(x) for x in batch_x[i, idx[i, : n_context + n_targets]]]
-                sorted_tgt_y[i] = [Value(y) for y in batch_f[i, idx[i, : n_context + n_targets]]]
+                sorted_tgt_x[i] = [
+                    Value(x) for x in batch_x[i, idx[i, : n_context + n_targets]]
+                ]
+                sorted_tgt_y[i] = [
+                    Value(y) for y in batch_f[i, idx[i, : n_context + n_targets]]
+                ]
             yield sample(
                 (sorted_ctx_x, sorted_ctx_y),
                 (sorted_tgt_x, sorted_tgt_y),
