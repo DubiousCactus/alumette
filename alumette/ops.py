@@ -9,13 +9,13 @@
 Diverse ops
 """
 
+import abc
 from functools import reduce
-from typing import List, Any
-
-from .tensor import Tensor
+from typing import Any, List
 
 import numpy as np
-import abc
+
+from .tensor import Tensor
 
 
 class Op(abc.ABC):

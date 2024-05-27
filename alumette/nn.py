@@ -11,8 +11,8 @@ Neural Nets yaaay.
 """
 
 import abc
-from typing import Any, List
 from functools import reduce
+from typing import Any, List
 
 import numpy as np
 
@@ -28,6 +28,7 @@ class Module:
 
     def parameters(self) -> List[Tensor]:
         return []
+
 
 class Linear(Module):
     def __init__(

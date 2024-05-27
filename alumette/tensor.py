@@ -10,12 +10,11 @@
 Autograd engine
 """
 
-import numpy as np
-import sys
 import abc
-
+import sys
 from typing import Any, List, Tuple
 
+import numpy as np
 
 """
 Learning notes:
@@ -77,7 +76,7 @@ class Tensor:
         data: np.ndarray | float | int | List,
         _parents=(),
         _grad_fn=NoOp.backward,
-        requires_grad=True, # Figure out how to make False default work!!
+        requires_grad=True,  # Figure out how to make False default work!!
         dtype=None,
     ):
         self.data = make_tensor_data(data, dtype=dtype)
