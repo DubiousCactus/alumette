@@ -11,10 +11,10 @@ Test the neural network library on a toy regression problem.
 
 import random
 
-from alumette import Tensor
-from alumette.nn import MLP, NeuralNet, Linear, SGD, MSE
-
 from tqdm import trange
+
+from alumette import Tensor
+from alumette.nn import MLP, MSE, SGD, Linear, NeuralNet
 
 
 class MyNet(NeuralNet):

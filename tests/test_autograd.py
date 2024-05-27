@@ -10,12 +10,13 @@
 Tests !
 """
 
-import numpy as np
-import unittest
 import random
+import unittest
 
-from alumette import Tensor, grad_check
+import numpy as np
+
 import alumette
+from alumette import Tensor, grad_check
 
 
 # TODO: Reorganize tests into categories?
