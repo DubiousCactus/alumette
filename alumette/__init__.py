@@ -12,14 +12,8 @@ Karpathy's autograd replica.
 
 from .tensor import Tensor
 from .ops import (
-    mean,
-    relu,
-    tanh,
-    softplus,
     exp,
-    log,
-)
-from .utils import allclose
+    )
 
 from typing import Callable, List
 

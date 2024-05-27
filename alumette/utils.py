@@ -11,8 +11,6 @@
 
 from typing import List
 
-from alumette.tensor import Tensor
-
 import numpy as np
 
 

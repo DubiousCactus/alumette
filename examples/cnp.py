@@ -11,9 +11,8 @@ Training a Conditional Neural Process
 
 import matplotlib.pyplot as plt
 import numpy as np
-import minigauss
 
-from alumette.nn import NeuralNet, Layer, MSE, SGD, MLP
+from alumette.nn import NeuralNet, MSE, SGD, MLP
 from alumette.engine import Value
 import alumette
 
