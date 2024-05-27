@@ -13,7 +13,6 @@ from collections import namedtuple
 from typing import List
 
 import matplotlib.pyplot as plt
-import minigauss
 import numpy as np
 from minigauss import GaussianProcess
 from minigauss.priors import ExponentialKernel
@@ -23,7 +22,7 @@ from tqdm import tqdm
 
 import alumette
 from alumette.engine import Value
-from alumette.nn import MLP, MSE, SGD, Layer, NeuralNet
+from alumette.nn import MLP, MSE, SGD, NeuralNet
 
 sample = namedtuple("sample", ["context", "targets"])
 
