@@ -47,11 +47,11 @@ def make_tensor_data(x: Any, dtype=None) -> np.ndarray:
     if isinstance(x, np.ndarray):
         type_ = x.dtype if dtype is None else dtype
         return x.astype(type_)
-    elif isinstance(x, list):
+    if isinstance(x, list):
         return np.array(x, dtype=type_)
-    elif isinstance(x, (float, int)):
+    if isinstance(x, (float, int)):
         return np.array(x, dtype=type_)
-    elif type(x) in [
+    if type(x) in [
         np.float32,
         np.float16,
         np.float64,
@@ -60,7 +60,7 @@ def make_tensor_data(x: Any, dtype=None) -> np.ndarray:
         np.int64,
     ]:
         return np.array(x, dtype=type(x))
-    elif isinstance(x, Tensor):
+    if isinstance(x, Tensor):
         raise NotImplementedError(
             "Tensor creation from other Tensor is not yet supported"
         )
